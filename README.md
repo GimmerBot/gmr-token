@@ -1,1 +1,1 @@
-# gmr-token
+# Gimmer Token Ethereum Contracts
