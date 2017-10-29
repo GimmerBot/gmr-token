@@ -15,7 +15,7 @@ contract GimmerCrowdSale is LimitedTokenCrowdSale, Ownable {
         AfterSale
     }
 
-    // we start at PreSale
+    // we start at Deployment stage
     Stages public currentStage;
 
     // beginning date to the withdrawal

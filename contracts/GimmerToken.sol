@@ -10,10 +10,6 @@ import '../submodules/zeppelin-gimmer/contracts/ownership/Ownable.sol';
  * `StandardToken` functions.
  */
 contract GimmerToken is StandardToken, Ownable {
-
-  uint256 public sellPrice;
-  uint256 public buyPrice;
-
   // this needs to be lowercase to be read by the clients
   string public constant name = "Gimmer";
   string public constant symbol = "GMR";  
@@ -27,28 +23,4 @@ contract GimmerToken is StandardToken, Ownable {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
-  
-  function setPrices(uint256 newSellPrice, uint256 newBuyPrice) public onlyOwner {
-      sellPrice = newSellPrice;
-      buyPrice = newBuyPrice;
-  }
-
-  function buy() public payable returns (uint amount) {
-      amount = msg.value / buyPrice;                    // calculates the amount
-      require(balances[this] >= amount);               // checks if it has enough to sell
-      balances[msg.sender] += amount;                  // adds the amount to buyer's balance
-      balances[this] -= amount;                        // subtracts amount from seller's balance
-      Transfer(this, msg.sender, amount);               // execute an event reflecting the change
-      return amount;                                    // ends function and returns
-  }
-
-  function sell(uint amount) public returns (uint revenue) {
-      require(balances[msg.sender] >= amount);         // checks if the sender has enough to sell
-      balances[this] += amount;                        // adds the amount to owner's balance
-      balances[msg.sender] -= amount;                  // subtracts the amount from seller's balance
-      revenue = amount7; * sellPrice;
-      require(msg.sender.send(revenue));                // sends ether to the seller: it's important to do this last to prevent recursion attacks
-      Transfer(msg.sender, this, amount);               // executes an event reflecting on the change
-      return revenue;                                   // ends function and returns
-  } 
 }
