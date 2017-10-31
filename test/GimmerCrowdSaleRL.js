@@ -31,7 +31,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
     var mainAcc = caccounts[0];
     var secAcc = caccounts[1];
 
-    // List of Tests
+    // List of Functions
     // State Changers
     // - withdrawTokens
     //      should: balance of sender greater than 0 and balance of sender frozen assets equals 0
@@ -80,28 +80,28 @@ contract ('GimmerCrowdSale', function (caccounts) {
         //Advance to the next block to correctly read time in the solidity "now" function interpreted by testrpc
         await advanceBlock();
 
-        Phase1Date = latestTime() + duration.minutes(51);
-        Phase2Date = latestTime() + duration.minutes(76);
-        Phase3Date = latestTime() + duration.minutes(106);
-        Phase4Date = latestTime() + duration.minutes(131);
-        Phase5Date = latestTime() + duration.minutes(156);
+        Phase1Date = latestTime() + duration.minutes(16);
+        Phase2Date = latestTime() + duration.minutes(31);
+        Phase3Date = latestTime() + duration.minutes(46);
+        Phase4Date = latestTime() + duration.minutes(61);
+        Phase5Date = latestTime() + duration.minutes(76);
     });
 
     describe('Deploying Token Sale', function() {
-        it('Should reject sending Wei to contract', async function () {
+        it('Reject sending Wei to contract', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             var amount = new BigNumber(1).mul(new BigNumber(10).pow(18));
 
-            await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow)
+            await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
         });
 
-        it("Should give the contract 75.000.000 GMR", async function () {
+        it("Should give the contract 90.000.000 GMR", async function () {
             var crowdSale;
             // Get initial balances of first and second account.
 
             var onemil = Math.pow(10, 6);
             var gmrDecimalCases = Math.pow(10, 8);
-            var toTransfer = 75;
+            var toTransfer = 90;
 
             var amount = toTransfer * onemil * gmrDecimalCases;
             var amountTotal = 100 * onemil * gmrDecimalCases;
@@ -143,17 +143,17 @@ contract ('GimmerCrowdSale', function (caccounts) {
             assert.equal(endStage, 1, "Contract should end in stage of PreSale");
         });
         
-        it('Should reject withdrawal of tokens', async function () {
+        it('Reject withdrawal of tokens', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawTokens().should.be.rejectedWith(EVMThrow)
         });
 
-        it('Should reject withdrawal of funds', async function () {
+        it('Reject withdrawal of funds', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawFunds().should.be.rejectedWith(EVMThrow)
         });
 
-        it('Should reject calling deploy', async function () {
+        it('Reject calling deploy', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.deploy().should.be.rejectedWith(EVMThrow)
         });
@@ -175,7 +175,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             assert.equal(contractPhase, 0, "Contract is in incorrect phase");
         });
 
-        it('Should reject buying less than minimal limit', async function () {
+        it('Reject buying less than minimal limit', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             var amount = new BigNumber(1).mul(new BigNumber(10).pow(7));
             await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
@@ -225,24 +225,24 @@ contract ('GimmerCrowdSale', function (caccounts) {
             TotalTokens = TotalTokens.add(tokensBought);
         });
 
-        it('Should reject payments after presale cap', async function () {
+        it('Reject payments after presale cap', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             var amount = new BigNumber(1).mul(new BigNumber(10).pow(18));
             
             await crowdSale.buy.call({from: mainAcc, value:amount}).should.be.rejectedWith(EVMThrow)
         });
 
-        it('Should reject withdrawal of tokens', async function () {
+        it('Reject withdrawal of tokens', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawTokens().should.be.rejectedWith(EVMThrow)
         });
 
-        it('Should reject withdrawal of funds', async function () {
+        it('Reject withdrawal of funds', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawFunds().should.be.rejectedWith(EVMThrow)
         });
 
-        it('Should reject calling deploy', async function () {
+        it('Reject calling deploy', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.deploy().should.be.rejectedWith(EVMThrow)
         });
@@ -268,7 +268,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             assert.equal(contractPhase.toNumber(), 1, "Contract is in incorrect phase");
         });
 
-        it('Should reject buying less than minimal limit', async function () {
+        it('Reject buying less than minimal limit', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             var amount = new BigNumber(1).mul(new BigNumber(10).pow(7));
             await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
@@ -296,17 +296,17 @@ contract ('GimmerCrowdSale', function (caccounts) {
             TotalTokens = TotalTokens.add(tokensBought);
         });
 
-        it('Should reject withdrawal of tokens', async function () {
+        it('Reject withdrawal of tokens', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawTokens().should.be.rejectedWith(EVMThrow)
         });
 
-        it('Should reject withdrawal of funds', async function () {
+        it('Reject withdrawal of funds', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawFunds().should.be.rejectedWith(EVMThrow)
         });
 
-        it('Should reject calling deploy', async function () {
+        it('Reject calling deploy', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.deploy().should.be.rejectedWith(EVMThrow)
         });
@@ -332,7 +332,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             assert.equal(contractPhase.toNumber(), 2, "Contract is in incorrect phase");
         });
 
-        it('Should reject buying less than minimal limit', async function () {
+        it('Reject buying less than minimal limit', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             var amount = new BigNumber(1).mul(new BigNumber(10).pow(7));
             await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
@@ -360,15 +360,15 @@ contract ('GimmerCrowdSale', function (caccounts) {
             TotalTokens = TotalTokens.add(tokensBought);
         });
 
-        it('Should reject withdrawal of tokens', async function () {
+        it('Reject withdrawal of tokens', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawTokens().should.be.rejectedWith(EVMThrow)
         });
-        it('Should reject withdrawal of funds', async function () {
+        it('Reject withdrawal of funds', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawFunds().should.be.rejectedWith(EVMThrow)
         });
-        it('Should reject calling deploy', async function () {
+        it('Reject calling deploy', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.deploy().should.be.rejectedWith(EVMThrow)
         });
@@ -395,7 +395,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             assert.equal(contractPhase.toNumber(), 3, "Contract is in incorrect phase");
         });
 
-        it('Should reject buying less than minimal limit', async function () {
+        it('Reject buying less than minimal limit', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             var amount = new BigNumber(1).mul(new BigNumber(10).pow(7));
             await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
@@ -423,15 +423,15 @@ contract ('GimmerCrowdSale', function (caccounts) {
             TotalTokens = TotalTokens.add(tokensBought);
         });
 
-        it('Should reject withdrawal of tokens', async function () {
+        it('Reject withdrawal of tokens', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawTokens().should.be.rejectedWith(EVMThrow)
         });
-        it('Should reject withdrawal of funds', async function () {
+        it('Reject withdrawal of funds', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawFunds().should.be.rejectedWith(EVMThrow)
         });
-        it('Should reject calling deploy', async function () {
+        it('Reject calling deploy', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.deploy().should.be.rejectedWith(EVMThrow)
         });
@@ -457,7 +457,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             assert.equal(contractPhase.toNumber(), 4, "Contract is in incorrect phase");
         });
 
-        it('Should reject buying less than minimal limit', async function () {
+        it('Reject buying less than minimal limit', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             var amount = new BigNumber(1).mul(new BigNumber(10).pow(7));
             await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
@@ -485,15 +485,15 @@ contract ('GimmerCrowdSale', function (caccounts) {
             TotalTokens = TotalTokens.add(tokensBought);
         });
 
-        it('Should reject withdrawal of tokens', async function () {
+        it('Reject withdrawal of tokens', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawTokens().should.be.rejectedWith(EVMThrow)
         });
-        it('Should reject withdrawal of funds', async function () {
+        it('Reject withdrawal of funds', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.withdrawFunds().should.be.rejectedWith(EVMThrow)
         });
-        it('Should reject calling deploy', async function () {
+        it('Reject calling deploy', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.deploy().should.be.rejectedWith(EVMThrow)
         });
@@ -519,14 +519,30 @@ contract ('GimmerCrowdSale', function (caccounts) {
             assert.equal(contractPhase.toNumber(), 4, "Contract is in incorrect phase");
         });
 
-        it('Should approve KYC for main account', async function () {
+        it('Should change KYC Manager to secondary account', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
-            await crowdSale.approveUserKYC(mainAcc);
+
+            var startKycManager = await crowdSale.getKYCManager();
+            await crowdSale.setKYCManager(secAcc);
+            var endKycManager = await crowdSale.getKYCManager();
+            
+            assert.equal(startKycManager, mainAcc, "KYC Manager should start as main account");
+            assert.equal(endKycManager, secAcc, "KYC Manager should end as secondary account");
+        });
+
+        it('Should not approve KYC executing from main account', async function () {
+            var crowdSale = await GimmerCrowdSale.deployed();
+            await crowdSale.approveUserKYC(mainAcc).should.be.rejectedWith(EVMThrow);
+        });
+
+        it('Should approve KYC when executing from secondary account', async function () {
+            var crowdSale = await GimmerCrowdSale.deployed();
+            await crowdSale.approveUserKYC(mainAcc, {from:secAcc});
             var userHasKyc = await crowdSale.userHasKYC(mainAcc);
             assert.equal(userHasKyc, true, "KYC has not been flagged");
         });
 
-        it('Should reject returning tokens to owner', async function () {
+        it('Reject returning tokens to owner', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             var token = await GimmerToken.deployed();
 
@@ -550,7 +566,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             await crowdSale.withdrawFunds().should.be.ok;
         });
 
-        it('Should reject buying less than minimal limit', async function () {
+        it('Reject buying less than minimal limit', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             var amount = new BigNumber(1).mul(new BigNumber(10).pow(7));
             await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
@@ -577,12 +593,12 @@ contract ('GimmerCrowdSale', function (caccounts) {
             assert.equal(mainAcc_end_tokenBalance.sub(mainAcc_start_tokenBalance).toString(), tokensBought.toString(), "Main account should buy return a specific amount for each phase");
         });
 
-        it('Should reject calling deploy', async function () {
+        it('Reject calling deploy', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.deploy().should.be.rejectedWith(EVMThrow)
         });
 
-        it('Should reject setting the after sale token price to 0', async function () {
+        it('Reject setting the after sale token price to 0', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.setAfterSaleTokenPrice(0).should.be.rejectedWith(EVMThrow)
         });

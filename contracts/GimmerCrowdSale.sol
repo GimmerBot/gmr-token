@@ -18,22 +18,25 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
         AfterSale
     }
 
-    // we start at Deployment stage
+    // We start at Deployment stage
     Stages public currentStage;
 
-    // beginning date to the withdrawal
+    // Beginning date to the withdrawal
     uint256 public startWithdrawalTime;
 
-    // an array holding the 5 token prices for the 5 weeks of crowdsale
+    // An array holding the 5 token prices for the 5 weeks of crowdsale
     uint256[5] public tokenPrices;
-    // same but for the dates
+    // Same but for the dates
     uint256[5] public tokenDates;
 
-    // price after the sale
+    // Price after the sale
     uint256 public afterSaleTokenPrice;
 
-    // maximum amount that can be sold during the Pre Sale period
+    // Maximum amount that can be sold during the Pre Sale period
     uint256 public preSaleLimit;
+
+    // Address that manages approval of KYC
+    address public kycManager;
 
     function GimmerCrowdSale(uint256[5] _saleTokenPrices, uint256[5] _saleDates,
                                 uint256 _minTokenAcquisition, address _tokenAddress, 
@@ -47,11 +50,29 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
         tokenPrices = _saleTokenPrices;
         tokenDates = _saleDates;
         preSaleLimit = _preSaleLimit;
+        kycManager = msg.sender;
 
         currentStage = Stages.Deployment;
 
         // this constructor initializes the LimitedTokenCrowdsale the creator 
         // of this contract as the wallet that will receive the crowdsale funds
+    }
+
+    /**
+    * @dev Changes the KYC manager to a new address
+    * @param _newKYCManager the new address for the KYC Manager
+    */
+    function setKYCManager(address _newKYCManager) public onlyOwner {
+        require(_newKYCManager != address(0));
+        kycManager = _newKYCManager;
+    }
+
+    /**
+    * @dev Returns the address of the account that is able to flag supporters' KYC
+    * @return an address representing the account that manages KYC approval
+    */
+    function getKYCManager() public constant returns (address) {
+        return kycManager;
     }
 
     /**
@@ -87,21 +108,9 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
     * @return An uint256 representing the current token price
     */
     function getTokenPrice() public constant returns (uint256) {
-        // uint8 as we will only have 5 dates
-        bool hasEnded = true;
-        uint256 index = tokenDates.length - 1; // default to the last price (highest)
-
-        // look if we are transactioning before any token progress dates,
-        // so the price should actually be cheaper
-        for (uint256 i = 0; i < tokenDates.length; i++) {
-            if (now < tokenDates[i]) {
-                hasEnded = false;
-                index = i;
-                break;
-            }
-        }
-
-        if (hasEnded) {
+        uint256 index = getTokenPhase(); // default to the last price (highest)
+        if (index == tokenDates.length.sub(1)) {
+            // user could have just called 
             return afterSaleTokenPrice;
         } else {
             return tokenPrices[index];
@@ -116,7 +125,6 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
         for (uint256 i = 0; i < tokenDates.length; i++) {
             if (now < tokenDates[i]) {
                 return i;
-                break;
             }
         }
         return tokenDates.length - 1;
@@ -130,6 +138,10 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
         buy();
     }
 
+    /**
+    * @dev Receives Wei and re-routes the payment
+    * to the correct function based on the current contract stage
+    */
     function buy() public payable {
         // this will update the stage or revert if we are on deployment
         updateStage(); 
@@ -244,7 +256,8 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
     /**
     * @dev Allows the owner of the contract to approve an user's KYC
     */
-    function approveUserKYC(address user) public onlyOwner {
+    function approveUserKYC(address user) public {
+        require(msg.sender == kycManager);
         internalApproveUserKYC(user);
     }
 
