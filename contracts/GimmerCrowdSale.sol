@@ -1,13 +1,13 @@
 pragma solidity ^0.4.17;
 
-import '../submodules/zeppelin-gimmer/contracts/crowdsale/LimitedTokenDirectCrowdsale.sol';
+import '../submodules/zeppelin-gimmer/contracts/crowdsale/LimitedTokenCrowdSale.sol';
 import '../submodules/zeppelin-gimmer/contracts/ownership/Ownable.sol';
 
 /**
 * @title Gimmer Crowd Sale
 * @dev Gimmer Crowd Sale contract
 */
-contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
+contract GimmerCrowdSale is LimitedTokenCrowdSale, Ownable {
     /**
     * @dev All the stages the contract has
     */
@@ -18,19 +18,22 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
         AfterSale
     }
 
-    // We start at Deployment stage
+    // The current stage of the contract - starting at Deployment
     Stages public currentStage;
 
-    // Beginning date to the withdrawal
+    // The current token pricing phase
+    uint256 public currentTokenPricePhase;
+
+    // Date to end the presale (cached from tokenDates[0])
+    uint256 public preSaleEndTime;
+
+    // Beginning date to the withdrawal (cached from tokenDates[last])
     uint256 public startWithdrawalTime;
 
-    // An array holding the 5 token prices for the 5 weeks of crowdsale
+    // An array holding the 5 token prices for the 5 crowdsale pricing phases
     uint256[5] public tokenPrices;
     // Same but for the dates
     uint256[5] public tokenDates;
-
-    // Price after the sale
-    uint256 public afterSaleTokenPrice;
 
     // Maximum amount that can be sold during the Pre Sale period
     uint256 public preSaleLimit;
@@ -41,11 +44,15 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
     function GimmerCrowdSale(uint256[5] _saleTokenPrices, uint256[5] _saleDates,
                                 uint256 _minTokenAcquisition, address _tokenAddress, 
                                 uint256 _preSaleLimit, uint256 _weiSaleLimitWithoutKYC)
-                                LimitedTokenDirectCrowdsale(_tokenAddress, _minTokenAcquisition, 
+                                LimitedTokenCrowdSale(_tokenAddress, _minTokenAcquisition, 
                                                         _weiSaleLimitWithoutKYC, msg.sender) public {
+        require(_minTokenAcquisition > 0);
+        require(_tokenAddress != address(0));
+        require(_preSaleLimit > 0);
+        require(_weiSaleLimitWithoutKYC > 0);
+
+        preSaleEndTime = _saleDates[0];                                                     
         startWithdrawalTime = _saleDates[_saleTokenPrices.length - 1];
-        // start the after sale price as the last value in the prices
-        afterSaleTokenPrice = _saleTokenPrices[_saleTokenPrices.length - 1];
         
         tokenPrices = _saleTokenPrices;
         tokenDates = _saleDates;
@@ -53,18 +60,7 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
         kycManager = msg.sender;
 
         currentStage = Stages.Deployment;
-
-        // this constructor initializes the LimitedTokenCrowdsale the creator 
-        // of this contract as the wallet that will receive the crowdsale funds
-    }
-
-    /**
-    * @dev Changes the KYC manager to a new address
-    * @param _newKYCManager the new address for the KYC Manager
-    */
-    function setKYCManager(address _newKYCManager) public onlyOwner {
-        require(_newKYCManager != address(0));
-        kycManager = _newKYCManager;
+        currentTokenPricePhase = 0;
     }
 
     /**
@@ -76,31 +72,12 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
     }
 
     /**
-    * @dev Notifies the contracts to go out of Deployment stage and into PreSale stage.
-    * Only executs if the contract knows it has tokens to sell 
+    * @dev Gets the amount that is locked from returning to the user
+    * because the users have not withdrawn yet
+    * @return an uint256 holding the amount left to pay to users
     */
-    function deploy() public onlyOwner {
-        require(atStage(Stages.Deployment));
-        // need to have tokens in contract, else something went wrong
-        require(token.balanceOf(this) > 0); 
-        currentStage = Stages.PreSale;
-    }
-
-    /**
-    * @dev Sets the price used for the token in the After Sale stage
-    * @param newPrice price to sell the token at
-    */
-    function setAfterSaleTokenPrice(uint256 newPrice) public onlyOwner {
-        require(newPrice > 0);
-        afterSaleTokenPrice = newPrice;
-    }
-
-    /**
-    * @dev returns the token price of the direct acquisition of tokens
-    * @return An uint256 representing the token price of direct acquisition
-    */
-    function getDirectTokenPrice() public constant returns (uint256) {
-        return afterSaleTokenPrice;
+    function getAmountLeftToWidthdraw() public constant returns (uint256) {
+        return tokensToWithdraw;
     }
 
     /**
@@ -108,26 +85,74 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
     * @return An uint256 representing the current token price
     */
     function getTokenPrice() public constant returns (uint256) {
-        uint256 index = getTokenPhase(); // default to the last price (highest)
-        if (index == tokenDates.length.sub(1)) {
-            // user could have just called 
-            return afterSaleTokenPrice;
-        } else {
-            return tokenPrices[index];
-        }
+        return tokenPrices[getCurrentTokenPricePhase()];
     }
-    
+
     /**
-    * @dev Returns the current phase of sale the contract is in
-    * @return An uint256 representing the current token sale phase
+    * @dev Returns the current token price based on the current sale phase
+    * (this is called by LimitedTokenCrowdsale to determine the current pricing of the tokens)
+    * @return An uint256 representing the current token price
     */
-    function getTokenPhase() public constant returns (uint256) {
+    function internalGetTokenPrice() internal constant returns (uint256) {
+        return tokenPrices[currentTokenPricePhase];
+    }
+
+    /**
+    * @dev If the contract is at a stage
+    * @param _stage the stage to compare to the current one
+    * @return a boolean representing if the contract is at the specific stage
+    */
+    function atStage(Stages _stage) internal constant returns(bool) {
+        return currentStage == _stage;
+    }
+
+    /**
+    * @dev returns the stage the contract is currently in
+    * @return an uint256 representing the current stage the contract is in
+    */
+    function getCurrentStage() constant public returns (Stages) {
+        return currentStage;
+    }
+
+    /**
+    * @dev returns the current token sale pricing index
+    * @return an uint256 representing the current pricing phase
+    */
+    function getCurrentTokenPricePhase() constant public returns (uint256) {
         for (uint256 i = 0; i < tokenDates.length; i++) {
             if (now < tokenDates[i]) {
                 return i;
             }
         }
         return tokenDates.length - 1;
+    }
+
+    /**
+    * @dev Updates the current token sale phase the contract is
+    * based on the current date
+    */
+    function updateTokenPhase() internal {
+        currentTokenPricePhase = getCurrentTokenPricePhase();
+    }
+
+    /**
+    * @dev Updates the current stage of the contract, while also failing
+    * to progress if we are still in the Deployment stage
+    */
+    function updateStage() internal {
+        require(!atStage(Stages.Deployment));
+        
+        if (currentStage == Stages.PreSale &&
+            now >= preSaleEndTime) {
+            currentStage = Stages.Sale;
+        } 
+        // dont use else if here - if the contract stagnated
+        // we might be changing stage TWICE in the same update!
+
+        if (currentStage == Stages.Sale &&
+            now >= startWithdrawalTime) {
+            currentStage = Stages.AfterSale;
+        }
     }
 
     /**
@@ -144,7 +169,8 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
     */
     function buy() public payable {
         // this will update the stage or revert if we are on deployment
-        updateStage(); 
+        updateStage();
+        updateTokenPhase();
 
         if (currentStage == Stages.PreSale) {
             require((weiRaised.add(msg.value)) <= preSaleLimit);
@@ -153,10 +179,9 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
         } else if (currentStage == Stages.Sale) {
             // sale has no cap, as long as we have tokens to transfer later we can sell them
             super.internalBuyToken(msg.value, msg.sender);
-        } else if (currentStage == Stages.AfterSale) {
-            // as long as there are tokens left in the contract's balance,
-            // let users buy based on an after sale price
-            super.internalBuyTokenDirect(msg.value, msg.sender);
+        } else {
+            // dont allow the user to give us Wei outside of the campaign
+            revert();
         }
     }
 
@@ -171,12 +196,14 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
     }
 
     /**
-    * @dev Gets the amount that is locked from returning to the user
-    * because the users have not withdrawn yet
-    * @return an uint256 holding the amount left to pay to users
+    * @dev Notifies the contracts to go out of Deployment stage and into PreSale stage.
+    * Only executs if the contract knows it has tokens to sell 
     */
-    function getAmountLeftToWidthdraw() public constant returns (uint256) {
-        return tokensToWithdraw;
+    function deploy() public onlyOwner {
+        require(atStage(Stages.Deployment));
+        // need to have tokens in contract, else something went wrong
+        require(token.balanceOf(this) > 0); 
+        currentStage = Stages.PreSale;
     }
 
     /**
@@ -207,43 +234,6 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
     }
 
     /**
-    * @dev Updates the current stage of the contract, while also failing
-    * to progress if we are still in the Deployment stage
-    */
-    function updateStage() internal {
-        require(!atStage(Stages.Deployment));
-        
-        if (currentStage == Stages.PreSale &&
-            now >= tokenDates[0]) {
-            currentStage = Stages.Sale;
-        } 
-        // dont use else if here - if the contract stagnated
-        // we might be changing stage TWICE in the same update!
-
-        if (currentStage == Stages.Sale &&
-            now >= startWithdrawalTime) {
-            currentStage = Stages.AfterSale;
-        }
-    }
-
-    /**
-    * @dev If the contract is at a stage
-    * @param _stage the stage to compare to the current one
-    * @return a boolean representing if the contract is at the specific stage
-    */
-    function atStage(Stages _stage) internal constant returns(bool) {
-        return currentStage == _stage;
-    }
-
-    /**
-    * @dev returns the stage the contract is currently in
-    * @return an uint256 representing the current stage the contract is in
-    */
-    function getCurrentStage() constant public returns (Stages) {
-        return currentStage;
-    }
-
-    /**
     * @dev Function called by the owner to withdraw all Wei inside the contract,
     * locked for execution only at the AfterSale
     */
@@ -254,7 +244,7 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
     }
 
     /**
-    * @dev Allows the owner of the contract to approve an user's KYC
+    * @dev Allows the KYC Manager (by default the creator of the contract) to approve an user's KYC
     */
     function approveUserKYC(address user) public {
         require(msg.sender == kycManager);
@@ -267,5 +257,14 @@ contract GimmerCrowdSale is LimitedTokenDirectCrowdsale, Ownable {
     */
     function updateSaleLimitWithoutKYC(uint256 _weiSaleLimitWithoutKYC) public onlyOwner {
         weiSaleLimitWithoutKYC = _weiSaleLimitWithoutKYC;
+    }
+
+    /**
+    * @dev Changes the KYC manager to a new address
+    * @param _newKYCManager the new address for the KYC Manager
+    */
+    function setKYCManager(address _newKYCManager) public onlyOwner {
+        require(_newKYCManager != address(0));
+        kycManager = _newKYCManager;
     }
 }

@@ -50,8 +50,6 @@ contract ('GimmerCrowdSale', function (caccounts) {
     //      should.not: execute at deployment stage
     //      should.not: receive value smaller than min transaction
     //      should.not: receive Wei after the PreSale limit
-    // - setAfterSaleTokenPrice
-    //      should.not: be executed by common users
     // - returnTokens
     //      should.not: execute at any stage other than AfterSale
     //      should.not: be executed by common users
@@ -65,7 +63,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
 
     // Constant Dynamic
     // - getTokenPrice
-    // - getTokenPhase
+    // - getCurrentTokenPricePhase
     // - forceUpdateStage
 
     // Constant    
@@ -80,11 +78,11 @@ contract ('GimmerCrowdSale', function (caccounts) {
         //Advance to the next block to correctly read time in the solidity "now" function interpreted by testrpc
         await advanceBlock();
 
-        Phase1Date = latestTime() + duration.minutes(16);
-        Phase2Date = latestTime() + duration.minutes(31);
-        Phase3Date = latestTime() + duration.minutes(46);
-        Phase4Date = latestTime() + duration.minutes(61);
-        Phase5Date = latestTime() + duration.minutes(76);
+        Phase1Date = latestTime() + duration.minutes(11);
+        Phase2Date = latestTime() + duration.minutes(21);
+        Phase3Date = latestTime() + duration.minutes(31);
+        Phase4Date = latestTime() + duration.minutes(41);
+        Phase5Date = latestTime() + duration.minutes(51);
     });
 
     describe('Deploying Token Sale', function() {
@@ -169,7 +167,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
         it ('Should be at PreSale/Phase 1', async function() {
             var crowdSale = await GimmerCrowdSale.deployed();
             var contractStage = await crowdSale.getCurrentStage.call();
-            var contractPhase = await crowdSale.getTokenPhase.call();
+            var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
             
             assert.equal(contractStage, 1, "Contract is in incorrect stage");
             assert.equal(contractPhase, 0, "Contract is in incorrect phase");
@@ -262,7 +260,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.forceUpdateStage();
             var contractStage = await crowdSale.getCurrentStage.call();
-            var contractPhase = await crowdSale.getTokenPhase.call();
+            var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
             
             assert.equal(contractStage.toNumber(), 2, "Contract is in incorrect stage");
             assert.equal(contractPhase.toNumber(), 1, "Contract is in incorrect phase");
@@ -326,7 +324,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.forceUpdateStage();
             var contractStage = await crowdSale.getCurrentStage.call();
-            var contractPhase = await crowdSale.getTokenPhase.call();
+            var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
             
             assert.equal(contractStage.toNumber(), 2, "Contract is in incorrect stage");
             assert.equal(contractPhase.toNumber(), 2, "Contract is in incorrect phase");
@@ -389,7 +387,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             await crowdSale.forceUpdateStage();
             var contractStage = await crowdSale.getCurrentStage.call();
             var contractStage = await crowdSale.getCurrentStage.call();
-            var contractPhase = await crowdSale.getTokenPhase.call();
+            var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
 
             assert.equal(contractStage.toNumber(), 2, "Contract is in incorrect stage");
             assert.equal(contractPhase.toNumber(), 3, "Contract is in incorrect phase");
@@ -451,7 +449,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.forceUpdateStage();
             var contractStage = await crowdSale.getCurrentStage.call();
-            var contractPhase = await crowdSale.getTokenPhase.call();
+            var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
 
             assert.equal(contractStage.toNumber(), 2, "Contract is in incorrect stage");
             assert.equal(contractPhase.toNumber(), 4, "Contract is in incorrect phase");
@@ -513,7 +511,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.forceUpdateStage();
             var contractStage = await crowdSale.getCurrentStage.call();
-            var contractPhase = await crowdSale.getTokenPhase.call();
+            var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
 
             assert.equal(contractStage.toNumber(), 3, "Contract is in incorrect stage");
             assert.equal(contractPhase.toNumber(), 4, "Contract is in incorrect phase");
@@ -572,82 +570,15 @@ contract ('GimmerCrowdSale', function (caccounts) {
             await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
         });
 
-        it('Should buy 1 ETH worth of tokens at AfterSale', async function () {
-            var amount = new BigNumber(1).mul(new BigNumber(10).pow(18));
-            var phasePrice = Phase5Price;
-            
-            var crowdSale = await GimmerCrowdSale.deployed();
-            var token = await GimmerToken.deployed();
-
-            var contractStage = await crowdSale.getCurrentStage.call();
-            assert.equal(contractStage, 3, "Contract is in incorrect stage");
-            
-            var mainAcc_start_tokenBalance = await token.balanceOf.call(mainAcc);
-            var currentTokenPrice = await crowdSale.getTokenPrice.call();
-            await crowdSale.send(amount.toString());
-            var mainAcc_end_tokenBalance = await token.balanceOf.call(mainAcc);
-
-            assert.equal(currentTokenPrice.toString(), phasePrice.toString(), "Contract is showing wrong price for the current phase");
-            
-            var tokensBought = amount.div(phasePrice).truncated(); // solidity truncates
-            assert.equal(mainAcc_end_tokenBalance.sub(mainAcc_start_tokenBalance).toString(), tokensBought.toString(), "Main account should buy return a specific amount for each phase");
-        });
-
         it('Reject calling deploy', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.deploy().should.be.rejectedWith(EVMThrow)
         });
 
-        it('Reject setting the after sale token price to 0', async function () {
-            var crowdSale = await GimmerCrowdSale.deployed();
-            await crowdSale.setAfterSaleTokenPrice(0).should.be.rejectedWith(EVMThrow)
-        });
-        
-
         it('GetTokenPrice should return correct price', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             var value = await crowdSale.getTokenPrice.call();
             assert.equal(value.toNumber(), Phase5Price.toNumber(), "getTokenPrice returned incorrect pricing for current phase");
-        });
-
-        it('Should change price of after sale', async function () {
-            var crowdSale = await GimmerCrowdSale.deployed();
-            
-            var startTokenPrice = await crowdSale.getTokenPrice.call();
-            var startDirTokenPrice = await crowdSale.getDirectTokenPrice.call();
-            await crowdSale.setAfterSaleTokenPrice(AfterSalePrice);
-            var endTokenPrice = await crowdSale.getTokenPrice.call();
-            var endDirTokenPrice = await crowdSale.getDirectTokenPrice.call();
-            
-            assert.equal(endTokenPrice.toString(), AfterSalePrice.toString(), "Token price is incorrect");
-            assert.equal(endTokenPrice.toString(), endDirTokenPrice.toString(), "Token price is incorrect");
-        });
-
-        it('Should buy 1 ETH worth of tokens at AfterSale with custom price', async function () {
-            var amount = new BigNumber(1).mul(new BigNumber(10).pow(18));
-            var phasePrice = AfterSalePrice;
-            
-            var crowdSale = await GimmerCrowdSale.deployed();
-            var token = await GimmerToken.deployed();
-
-            var contractStage = await crowdSale.getCurrentStage.call();
-            assert.equal(contractStage, 3, "Contract is in incorrect stage");
-            
-            var mainAcc_start_tokenBalance = await token.balanceOf.call(mainAcc);
-            var currentTokenPrice = await crowdSale.getTokenPrice.call();
-            await crowdSale.send(amount.toString());
-            var mainAcc_end_tokenBalance = await token.balanceOf.call(mainAcc);
-
-            assert.equal(currentTokenPrice.toString(), phasePrice.toString(), "Contract is showing wrong price for the current phase");
-            
-            var tokensBought = amount.div(phasePrice).truncated(); // solidity truncates
-            assert.equal(mainAcc_end_tokenBalance.sub(mainAcc_start_tokenBalance).toString(), tokensBought.toString(), "Main account should buy return a specific amount for each phase");
-        });
-
-        it('GetTokenPrice should return correct price after change of price', async function () {
-            var crowdSale = await GimmerCrowdSale.deployed();
-            var value = await crowdSale.getTokenPrice.call();
-            assert.equal(value.toString(), AfterSalePrice.toString(), "getTokenPrice returned incorrect pricing for current phase");
         });
 
         it('Should return all remaining tokens to owner', async function () {
