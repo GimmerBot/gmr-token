@@ -78,11 +78,11 @@ contract ('GimmerCrowdSale', function (caccounts) {
         //Advance to the next block to correctly read time in the solidity "now" function interpreted by testrpc
         await advanceBlock();
 
-        Phase1Date = latestTime() + duration.minutes(11);
-        Phase2Date = latestTime() + duration.minutes(21);
-        Phase3Date = latestTime() + duration.minutes(31);
-        Phase4Date = latestTime() + duration.minutes(41);
-        Phase5Date = latestTime() + duration.minutes(51);
+        Phase1Date = latestTime() + duration.minutes(1441);
+        Phase2Date = latestTime() + duration.minutes(2881);
+        Phase3Date = latestTime() + duration.minutes(4321);
+        Phase4Date = latestTime() + duration.minutes(5761);
+        Phase5Date = latestTime() + duration.minutes(7201);
     });
 
     describe('Deploying Token Sale', function() {
@@ -209,13 +209,14 @@ contract ('GimmerCrowdSale', function (caccounts) {
             var token = await GimmerToken.deployed();
 
             var contractStage = await crowdSale.getCurrentStage.call();
+            assert.equal(contractStage, 1, "Contract is in incorrect stage");
+
             var mainAcc_start_tokenBalance = await crowdSale.tokenBalanceOf.call(mainAcc);
             var currentTokenPrice = await crowdSale.getTokenPrice.call();
+            assert.equal(currentTokenPrice.toString(), phasePrice.toString(), "Contract is showing wrong price for the current phase");
+
             await crowdSale.send(amount.toString());
             var mainAcc_end_tokenBalance = await crowdSale.tokenBalanceOf.call(mainAcc);
-
-            assert.equal(contractStage, 1, "Contract is in incorrect stage");
-            assert.equal(currentTokenPrice.toString(), phasePrice.toString(), "Contract is showing wrong price for the current phase");
             
             var tokensBought = amount.div(phasePrice).truncated(); // solidity truncates
             assert.equal(mainAcc_end_tokenBalance.sub(mainAcc_start_tokenBalance).toString(), tokensBought.toString(), "Main account should return a specific amount for each phase");
@@ -225,9 +226,8 @@ contract ('GimmerCrowdSale', function (caccounts) {
 
         it('Reject payments after presale cap', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
-            var amount = new BigNumber(1).mul(new BigNumber(10).pow(18));
             
-            await crowdSale.buy.call({from: mainAcc, value:amount}).should.be.rejectedWith(EVMThrow)
+            await crowdSale.buy.call({from: mainAcc, value:1}).should.be.rejectedWith(EVMThrow)
         });
 
         it('Reject withdrawal of tokens', async function () {
