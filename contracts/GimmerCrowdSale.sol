@@ -52,7 +52,7 @@ contract GimmerCrowdSale is LimitedTokenCrowdSale, Ownable {
         require(_weiSaleLimitWithoutKYC > 0);
 
         preSaleEndTime = _saleDates[0];                                                     
-        startWithdrawalTime = _saleDates[_saleTokenPrices.length - 1];
+        startWithdrawalTime = _saleDates[_saleDates.length - 1];
         
         tokenPrices = _saleTokenPrices;
         tokenDates = _saleDates;

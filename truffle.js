@@ -15,7 +15,7 @@ module.exports = {
       port: 8545,
       network_id: "*", // Match any network id
       from: "3e86Fe56342a9A3e2476eb2Aeb508459cBF1364F",
-      gas: 6148566
+      gas: 4712388
     }
     //,
     //live: {
@@ -29,5 +29,11 @@ module.exports = {
     //  // provider - web3 provider instance Truffle should use to talk to the Ethereum network.
     //  //          - if specified, host and port are ignored.
     //}
+  },
+  solc: {
+    optimizer: {
+      enabled: true,
+      runs: 200
+    }
   }
 };
