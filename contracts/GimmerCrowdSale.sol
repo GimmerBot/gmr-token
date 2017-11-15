@@ -97,6 +97,26 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
         currentTokenPricePhase = 0;
     }
 
+    function getTotalTokensSold() public constant returns (uint256) {
+        return tokensSold;
+    }
+
+    /**
+    * @dev Returns if an users has KYC approval or not
+    * @return A boolean representing the user's KYC status
+    */
+    function userHasKYC(address user) public constant returns (bool) {
+        return supportersMap[user].hasKYC;
+    }
+
+    /**
+    * @dev Returns the address of the token contract
+    * @return An address for the GimmerToken
+    */
+    function getTokenContract() public constant returns (address) {
+        return token;
+    }
+
     /**
     * @dev Returns the address of the account that is able to flag supporters' KYC
     * @return an address representing the account that manages KYC approval
@@ -167,6 +187,19 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
         if (currentStage == Stages.Sale &&
             now >= startWithdrawalTime) {
             currentStage = Stages.FinishedSale;
+
+            // if (tokensSold < )
+            // {
+            //     // freeze
+            // }
+            // else {
+            //     // 10% and send to us
+            // }
+
+            // get 10%
+            
+            token.finishMinting();
+            token.transferOwnership(wallet);
         }
     }
 
@@ -174,7 +207,7 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
     * @dev Receives Wei
     */
     function () public payable {
-        buy();
+        buyTokens(msg.sender);
     }
 
     /**
@@ -192,8 +225,6 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
         updateStage();
         updateTokenPhase();
 
-        require(atStage(Stages.Sale));
-
         // calculate token amount to be created
         uint256 currentTokenPrice = tokenPrices[currentTokenPricePhase];
         uint256 weiAmount = msg.value;
@@ -203,9 +234,11 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
         uint256 totalTokensSold = tokensSold.add(tokens);
 
         if (atStage(Stages.PreSale)) {
-            // presale has a hardcap of Wei that can be sold
+            // presale has a hardcap of tokens that can be sold
             require(totalTokensSold <= preSaleTokenCap);
-        } 
+        } else if (!atStage(Stages.Sale)) {
+            revert();
+        }
         require(totalTokensSold <= tokenSaleCap);
 
         Supporter storage sup = supportersMap[beneficiary];
@@ -227,21 +260,12 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
     }
 
     /**
-    * @dev Notifies the contracts to go out of Deployment stage and into PreSale stage.
-    * Only executs if the contract knows it has tokens to sell 
+    * @dev Allows the owner to force update the state of the contract
+    * without the need to actually send Wei to the contract
     */
-    function deploy() public onlyOwner {
-        require(atStage(Stages.Deployment));
-        // need to have tokens in contract, else something went wrong
-        require(token.balanceOf(this) > 0);
-        currentStage = Stages.PreSale;
-    }
-
-    /**
-    * @dev Allows the owner to force update the current stage of the contract
-    */
-    function forceUpdateStage() public onlyOwner {
+    function forceUpdateState() public onlyOwner {
         updateStage();
+        updateTokenPhase();
     }
 
     /**

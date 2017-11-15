@@ -1,9 +1,8 @@
 pragma solidity ^0.4.17;
 
 import '../submodules/zeppelin-solidity/contracts/token/MintableToken.sol';
-import '../submodules/zeppelin-solidity/contracts/lifecycle/Pausable.sol';
 
-contract GimmerToken is MintableToken, Pausable  {
+contract GimmerToken is MintableToken  {
     // this needs to be lowercase to be read by the clients
     string public constant name = "Gimmer";
     string public constant symbol = "GMR";  
@@ -16,25 +15,5 @@ contract GimmerToken is MintableToken, Pausable  {
     function GimmerToken() public {
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) whenNotPaused public returns (bool) {
-        super.transferFrom(_from, _to, _value);
-    }
-
-    function approve(address _spender, uint256 _value) whenNotPaused public returns (bool) {
-        super.approve(_spender, _value);
-    }
-
-    function increaseApproval (address _spender, uint _addedValue) whenNotPaused public returns (bool success) {
-        super.increaseApproval(_spender, _addedValue);
-    }
-
-    function decreaseApproval (address _spender, uint _subtractedValue) whenNotPaused public returns (bool success) {
-        super.decreaseApproval(_spender, _subtractedValue);
-    }
-
-    function transfer(address _to, uint256 _value) whenNotPaused public returns (bool) {
-        super.transfer(_to, _value);
     }
 }
