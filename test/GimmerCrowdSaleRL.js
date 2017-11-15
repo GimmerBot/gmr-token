@@ -32,7 +32,7 @@ var Phase3Date;
 var Phase4Date;
 var Phase5Date;
 
-var PreSaleWeiCap = new BigNumber(5000).mul(ToToken) // 5000 tokens presale cap
+var PreSaleWeiCap = new BigNumber(10000).mul(ToToken) // 5000 tokens presale cap
                         .mul(Phase1Price).add(Phase1Price);
 var Phase1_1EthWorth = EthToWei.div(Phase1Price).truncated();
 
@@ -59,6 +59,19 @@ async function doBuy(acc, amount, expectedStage, expectedPrice) {
     var dif = mainAcc_end_tokenBalance.sub(mainAcc_start_tokenBalance);
     var tokensBought = amount.div(expectedPrice).truncated(); // solidity truncates
     assert.equal(dif.toString(), tokensBought.toString(), "Main account should buy return a specific amount for each phase");
+}
+
+async function jumpToDate(date, expectedStage, expectedPhase) {
+    await increaseTimeTo(date);
+    await advanceBlock();
+    
+    var crowdSale = await GimmerCrowdSale.deployed();
+    await crowdSale.forceUpdateState();
+    var contractStage = await crowdSale.getCurrentStage.call();
+    var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
+    
+    assert.equal(contractStage.toNumber(), expectedStage, "Contract is in incorrect stage");
+    assert.equal(contractPhase.toNumber(), expectedPhase, "Contract is in incorrect phase");
 }
 
 contract ('GimmerCrowdSale', function (caccounts) {
@@ -101,7 +114,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             assert.equal(endStage.toNumber(), 1, "Contract should end in stage of PreSale");
         });
 
-        it('Token Price should equal the price for Phase 5', async function () {
+        it('Token Price should equal the price for Phase 1', async function () {
             await checkTokenPrice(Phase1Price);
         });
     });
@@ -123,7 +136,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
         });
 
         it('Should buy 1 ETH worth of tokens at PreSale', async function () {
-            await doBuy(mainAcc, _1Eth, 1, Phase1Price);
+            await doBuy(mainAcc, EthToWei, 1, Phase1Price);
         });
         
         it('Should change KYC Manager to secondary account', async function () {
@@ -142,6 +155,13 @@ contract ('GimmerCrowdSale', function (caccounts) {
             await crowdSale.approveUserKYC(mainAcc).should.be.rejectedWith(EVMThrow);
         });
 
+        it('Should reject buying more than KYC limit without approval ' + EthToWei.div(EthToWei) + ' ETH', async function () {
+            var amount = PreSaleWeiCap.minus(EthToWei).add(Phase1Price);
+            var crowdSale = await GimmerCrowdSale.deployed();
+            
+            await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
+        });
+
         it('Should approve KYC when executing from secondary account', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.approveUserKYC(mainAcc, {from:secAcc});
@@ -149,18 +169,18 @@ contract ('GimmerCrowdSale', function (caccounts) {
             assert.equal(userHasKyc, true, "KYC has not been flagged");
         });
 
-        it('Should reject buying more than pre sale cap - ' + PreSaleWeiCap.minus(EthToWei).add(Phase1Price), async function () {
+        it('Should reject buying more than pre sale cap - ' + PreSaleWeiCap.minus(EthToWei).add(Phase1Price).div(EthToWei) + ' ETH', async function () {
             var amount = PreSaleWeiCap.minus(EthToWei).add(Phase1Price);
             var crowdSale = await GimmerCrowdSale.deployed();
             
             await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
         });
 
-        it('Should buy the rest of the tokens to reach the PreSaleCap: ' + PreSaleWeiCap.minus(EthToWei), async function () {
+        it('Should buy the rest of the tokens to reach the pre sale cap: ' + PreSaleWeiCap.minus(EthToWei).div(EthToWei) + ' ETH', async function () {
             await doBuy(mainAcc, PreSaleWeiCap.minus(EthToWei), 1, Phase1Price);
         });
 
-        it('Reject payments after presale cap', async function () {
+        it('Reject payments after pre sale cap', async function () {
             var crowdSale = await GimmerCrowdSale.deployed();
             await crowdSale.buy.call({from: mainAcc, value:1}).should.be.rejectedWith(EVMThrow)
         });
@@ -171,17 +191,8 @@ contract ('GimmerCrowdSale', function (caccounts) {
     });
 
     describe('Stage: Sale (Phase 2)', function() {
-        it ('Should jump to phase 2 start time', async function() {
-            await increaseTimeTo(Phase1Date);
-            await advanceBlock();
-            
-            var crowdSale = await GimmerCrowdSale.deployed();
-            await crowdSale.forceUpdateState();
-            var contractStage = await crowdSale.getCurrentStage.call();
-            var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
-            
-            assert.equal(contractStage.toNumber(), 2, "Contract is in incorrect stage");
-            assert.equal(contractPhase.toNumber(), 1, "Contract is in incorrect phase");
+        it ('Should jump to Phase 2 start time, changing to Sale Stage', async function() {
+            await jumpToDate(Phase1Date, 2, 1);
         });
 
         it('Reject buying less than minimal limit', async function () {
@@ -200,17 +211,8 @@ contract ('GimmerCrowdSale', function (caccounts) {
     });
 
     describe('Stage: Sale (Phase 3)', function(){
-        it ('Should jump to phase 3 start time', async function() {
-            await increaseTimeTo(Phase2Date);
-            await advanceBlock();
-            
-            var crowdSale = await GimmerCrowdSale.deployed();
-            await crowdSale.forceUpdateState();
-            var contractStage = await crowdSale.getCurrentStage.call();
-            var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
-            
-            assert.equal(contractStage.toNumber(), 2, "Contract is in incorrect stage");
-            assert.equal(contractPhase.toNumber(), 2, "Contract is in incorrect phase");
+        it ('Should jump to Phase 3 start time', async function() {
+            await jumpToDate(Phase2Date, 2, 2);
         });
 
         it('Reject buying less than minimal limit', async function () {
@@ -230,17 +232,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
 
     describe('Stage: Sale (Phase 4)', function(){
         it ('Should jump to phase 4 start time', async function() {
-            await increaseTimeTo(Phase3Date);
-            await advanceBlock();
-            
-            var crowdSale = await GimmerCrowdSale.deployed();
-            await crowdSale.forceUpdateState();
-            var contractStage = await crowdSale.getCurrentStage.call();
-            var contractStage = await crowdSale.getCurrentStage.call();
-            var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
-
-            assert.equal(contractStage.toNumber(), 2, "Contract is in incorrect stage");
-            assert.equal(contractPhase.toNumber(), 3, "Contract is in incorrect phase");
+            await jumpToDate(Phase3Date, 2, 3);
         });
 
         it('Reject buying less than minimal limit', async function () {
@@ -259,17 +251,8 @@ contract ('GimmerCrowdSale', function (caccounts) {
     });
 
     describe('Stage: Sale (Phase 5)', function(){
-        it ('Should jump to phase 5 start time', async function() {
-            await increaseTimeTo(Phase4Date);
-            await advanceBlock();
-            
-            var crowdSale = await GimmerCrowdSale.deployed();
-            await crowdSale.forceUpdateState();
-            var contractStage = await crowdSale.getCurrentStage.call();
-            var contractPhase = await crowdSale.getCurrentTokenPricePhase.call();
-
-            assert.equal(contractStage.toNumber(), 2, "Contract is in incorrect stage");
-            assert.equal(contractPhase.toNumber(), 4, "Contract is in incorrect phase");
+        it ('Should jump to Phase 5 start time', async function() {
+            await jumpToDate(Phase4Date, 2, 4);
         });
 
         it('Reject buying less than minimal limit', async function () {
@@ -288,15 +271,8 @@ contract ('GimmerCrowdSale', function (caccounts) {
     });
 
     describe('Stage: FinishedSale', function(){
-        it ('Should jump to after sale start time', async function() {
-            await increaseTimeTo(Phase5Date);
-            await advanceBlock();
-            
-            var crowdSale = await GimmerCrowdSale.deployed();
-            await crowdSale.forceUpdateState();
-            var contractStage = await crowdSale.getCurrentStage.call();
-
-            assert.equal(contractStage.toNumber(), 3, "Contract is in incorrect stage");
+        it ('Should jump to After Sale start time', async function() {
+            await jumpToDate(Phase5Date, 3, 4);
         });
 
         it('Reject sending 1 Wei to contract', async function () {

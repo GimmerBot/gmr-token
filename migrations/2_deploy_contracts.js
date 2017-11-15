@@ -20,10 +20,8 @@ module.exports = function(deployer) {
         a(30),
         [13158496, 13980902, 14803308, 15625714, 16448122], // GMR token prices
         [a(1400), a(2880), a(4320), a(5760), a(7200)], // GMR token dates, in Unix time
-        5 * Math.pow(10, 18), // maximum amount of Wei the person can spend without KYC
-        1 * Math.pow(10, 8), // minimum amount of tokens the person can buy (1 GMR token and the 8 digits)
-        5000 * Math.pow(10, 8), // pre sale token cap
-        100 * Math.pow(10, 6) * Math.pow(10, 8) // token sale cap
+        5 * Math.pow(10, 18), // maximum amount of Wei the person can spend without KYC        
+        0x204d8e205bedc8e12bfc158cba6583966117e3c5 // frozen wallet address
     ); 
 
     // return deployer.deploy(GimmerCrowdSaleB, // give the address of the crowd sale

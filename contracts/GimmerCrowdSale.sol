@@ -50,9 +50,6 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
     // Same but for the dates
     uint256[5] public tokenDates;
 
-    // Maximum amount that can be sold during the Pre Sale period
-    uint256 public preSaleTokenCap;
-
     // Address that manages approval of KYC
     address public kycManager;
 
@@ -62,30 +59,33 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
     // Amount of total tokens sold
     uint256 public tokensSold;
 
+    // Wallet to generate tokens and move them to
+    address public freezeWallet;
+    // The total amount of tokens frozen when this contract ended (only happens if the lower bound limit has not been reached)
+    uint256 public totalTokensFrozen;
+
+    // Maximum amount that can be sold during the Pre Sale period
+    uint256 public constant PRE_SALE_TOKEN_CAP = 10000 * 10**8;//13 * 10**6 * 10**8;
+
     // The maximum amount of tokens that can be sold during the entire sale
-    uint256 public tokenSaleCap;
+    uint256 public constant TOKEN_SALE_CAP = 100 * 10**6 * 10**8;
 
     // The minimum amount of tokens a user is allowed to buy
-    uint256 public minTokenTransaction;
+    uint256 public constant MIN_TOKEN_TRANSACTION = 1 * 10**8;
 
-    function GimmerCrowdSale(uint256 startDate, uint256[5] _saleTokenPrices, 
-                                uint256[5] _saleDates, uint256 _saleWeiLimitWithoutKYC,
-                                uint256 _minTokenTransaction, uint256 _preSaleTokenCap, 
-                                uint256 _tokenSaleCap)
-                                Crowdsale(startDate, _saleDates[_saleDates.length - 1],
-                                            _saleTokenPrices[0], msg.sender) public {
+    // The minimum amount of tokens we need to sell to change the final distribution of tokens
+    uint256 public constant LOWER_BOUND_LIMIT = 50 * 10**6 * 10**8;
+
+    function GimmerCrowdSale(uint256 startDate, uint256[5] _saleTokenPrices, uint256[5] _saleDates, uint256 _saleWeiLimitWithoutKYC, address _freezeWallet) 
+        Crowdsale(startDate, _saleDates[_saleDates.length - 1], _saleTokenPrices[0], msg.sender) public {
         require(_saleWeiLimitWithoutKYC > 0);
-        require(_minTokenTransaction > 0);
-        require(_preSaleTokenCap > 0);
-        require(_tokenSaleCap > 0);
-
+        require(_freezeWallet != address(0));
+        
         // copy args
         tokenPrices = _saleTokenPrices;
         tokenDates = _saleDates;
-        minTokenTransaction = _minTokenTransaction;
-        preSaleTokenCap = _preSaleTokenCap;
         saleWeiLimitWithoutKYC = _saleWeiLimitWithoutKYC;
-        tokenSaleCap = _tokenSaleCap;
+        freezeWallet = _freezeWallet;
 
         // initialize the contract
         preSaleEndTime = _saleDates[0];                                                     
@@ -95,6 +95,101 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
 
         currentStage = Stages.Deployment;
         currentTokenPricePhase = 0;
+    }
+
+    /**
+    * @dev Receives Wei
+    */
+    function () public payable {
+        buyTokens(msg.sender);
+    }
+
+    /**
+    * @dev Receives Wei and re-routes the payment
+    * to the correct function based on the current contract stage
+    */
+    function buy() public payable {
+        buyTokens(msg.sender);
+    }
+
+    function buyTokens(address beneficiary) public payable {
+        require(beneficiary != address(0));
+        require(validPurchase());
+
+        updateStage();
+        updateTokenPhase();
+
+        // calculate token amount to be created
+        uint256 currentTokenPrice = tokenPrices[currentTokenPricePhase];
+        uint256 weiAmount = msg.value;
+        uint256 tokens = weiAmount.div(currentTokenPrice);
+        require(tokens > MIN_TOKEN_TRANSACTION);
+        
+        uint256 totalTokensSold = tokensSold.add(tokens);
+
+        if (atStage(Stages.PreSale)) {
+            // presale has a hardcap of tokens that can be sold
+            require(totalTokensSold <= PRE_SALE_TOKEN_CAP);
+        } else if (!atStage(Stages.Sale)) {
+            revert();
+        }
+        require(totalTokensSold <= TOKEN_SALE_CAP);
+
+        Supporter storage sup = supportersMap[beneficiary];
+        uint256 totalWei = sup.weiSpent.add(weiAmount);
+        if (!sup.hasKYC && totalWei > saleWeiLimitWithoutKYC) {
+            revert();
+        }
+        // add to the total to be withdrawn
+        sup.weiSpent = totalWei;
+
+        // update state
+        weiRaised = weiRaised.add(weiAmount);
+        tokensSold = totalTokensSold;
+
+        token.mint(beneficiary, tokens);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+        forwardFunds();
+    }
+
+    /**
+    * @dev Allows the owner to force update the state of the contract
+    * without the need to actually send Wei to the contract
+    */
+    function forceUpdateState() public onlyOwner {
+        updateStage();
+        updateTokenPhase();
+    }
+
+    /**
+    * @dev Approves an User's KYC, unfreezing any Wei/Tokens
+    * to be withdrawn
+    * @param user The user to flag as known
+    */
+    function approveUserKYC(address user) public {
+        require(msg.sender == kycManager);
+
+        Supporter storage sup = supportersMap[user];
+        sup.hasKYC = true;
+    }
+
+    /**
+    * @dev Allow the owner to change the limit allowed for sales with no KYC
+    * (future proofing against KYC possible updates)
+    * @param _saleWeiLimitWithoutKYC The value to change the no-KYC sale limit to
+    */
+    function updateSaleLimitWithoutKYC(uint256 _saleWeiLimitWithoutKYC) public onlyOwner {
+        saleWeiLimitWithoutKYC = _saleWeiLimitWithoutKYC;
+    }
+
+    /**
+    * @dev Changes the KYC manager to a new address
+    * @param _newKYCManager The new address that will be managing KYC approval
+    */
+    function setKYCManager(address _newKYCManager) public onlyOwner {
+        require(_newKYCManager != address(0));
+        kycManager = _newKYCManager;
     }
 
     function getTotalTokensSold() public constant returns (uint256) {
@@ -188,113 +283,24 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
             now >= startWithdrawalTime) {
             currentStage = Stages.FinishedSale;
 
-            // if (tokensSold < )
-            // {
-            //     // freeze
-            // }
-            // else {
-            //     // 10% and send to us
-            // }
-
             // get 10%
-            
-            token.finishMinting();
-            token.transferOwnership(wallet);
+            finishContract();
         }
     }
 
-    /**
-    * @dev Receives Wei
-    */
-    function () public payable {
-        buyTokens(msg.sender);
-    }
-
-    /**
-    * @dev Receives Wei and re-routes the payment
-    * to the correct function based on the current contract stage
-    */
-    function buy() public payable {
-        buyTokens(msg.sender);
-    }
-
-    function buyTokens(address beneficiary) public payable {
-        require(beneficiary != address(0));
-        require(validPurchase());
-
-        updateStage();
-        updateTokenPhase();
-
-        // calculate token amount to be created
-        uint256 currentTokenPrice = tokenPrices[currentTokenPricePhase];
-        uint256 weiAmount = msg.value;
-        uint256 tokens = weiAmount.div(currentTokenPrice);
-        require(tokens > minTokenTransaction);
+    function finishContract() internal {
+        uint256 tenPC = tokensSold.div(10);
+        uint256 totalTokens = tokensSold.add(tenPC);
         
-        uint256 totalTokensSold = tokensSold.add(tokens);
-
-        if (atStage(Stages.PreSale)) {
-            // presale has a hardcap of tokens that can be sold
-            require(totalTokensSold <= preSaleTokenCap);
-        } else if (!atStage(Stages.Sale)) {
-            revert();
+        if (tokensSold < LOWER_BOUND_LIMIT) {
+            totalTokensFrozen = LOWER_BOUND_LIMIT.sub(totalTokens);
+            token.mint(freezeWallet, totalTokensFrozen);
         }
-        require(totalTokensSold <= tokenSaleCap);
 
-        Supporter storage sup = supportersMap[beneficiary];
-        uint256 totalWei = sup.weiSpent.add(weiAmount);
-        if (!sup.hasKYC && totalWei > saleWeiLimitWithoutKYC) {
-            revert();
-        }
-        // add to the total to be withdrawn
-        sup.weiSpent = totalWei;
+        // send 10% to Gimmer Team wallet
+        token.mint(wallet, tenPC);
 
-        // update state
-        weiRaised = weiRaised.add(weiAmount);
-        tokensSold = totalTokensSold;
-
-        token.mint(beneficiary, tokens);
-        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-        forwardFunds();
-    }
-
-    /**
-    * @dev Allows the owner to force update the state of the contract
-    * without the need to actually send Wei to the contract
-    */
-    function forceUpdateState() public onlyOwner {
-        updateStage();
-        updateTokenPhase();
-    }
-
-    /**
-    * @dev Approves an User's KYC, unfreezing any Wei/Tokens
-    * to be withdrawn
-    * @param user The user to flag as known
-    */
-    function approveUserKYC(address user) public {
-        require(msg.sender == kycManager);
-
-        Supporter storage sup = supportersMap[user];
-        sup.hasKYC = true;
-    }
-
-    /**
-    * @dev Allow the owner to change the limit allowed for sales with no KYC
-    * (future proofing against KYC possible updates)
-    * @param _saleWeiLimitWithoutKYC The value to change the no-KYC sale limit to
-    */
-    function updateSaleLimitWithoutKYC(uint256 _saleWeiLimitWithoutKYC) public onlyOwner {
-        saleWeiLimitWithoutKYC = _saleWeiLimitWithoutKYC;
-    }
-
-    /**
-    * @dev Changes the KYC manager to a new address
-    * @param _newKYCManager The new address that will be managing KYC approval
-    */
-    function setKYCManager(address _newKYCManager) public onlyOwner {
-        require(_newKYCManager != address(0));
-        kycManager = _newKYCManager;
+        token.finishMinting();
+        token.transferOwnership(wallet);
     }
 }
