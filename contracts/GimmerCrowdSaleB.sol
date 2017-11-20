@@ -1,14 +1,15 @@
 pragma solidity ^0.4.17;
 
-import '../submodules/zeppelin-solidity/contracts/crowdsale/Crowdsale.sol';
-import '../submodules/zeppelin-solidity/contracts/ownership/Ownable.sol';
+import '../submodules/zeppelin-solidity/contracts/math/SafeMath.sol';
 import './GimmerToken.sol';
 
 /**
-* @title Gimmer Crowd Sale
+* @title Gimmer Crowd Sale B
 * @dev Gimmer Crowd Sale contract
 */
-contract GimmerCrowdSale is Crowdsale, Ownable {
+contract GimmerCrowdSaleB is Ownable {
+    using SafeMath for uint256;
+
     /**
     * @dev All the stages the contract has
     */
@@ -29,6 +30,26 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
         // if the user has KYC flagged
         bool hasKYC;
     }
+
+    /// Crowdsale Contract
+    // The token being sold
+    GimmerToken public token;
+    // start and end timestamps where investments are allowed (both inclusive)
+    uint256 public startTime;
+    //uint256 public endTime;
+    // address where funds are collected
+    address public wallet;
+    // amount of raised money in wei
+    uint256 public weiRaised;
+    /**
+    * event for token purchase logging
+    * @param purchaser who paid for the tokens
+    * @param beneficiary who got the tokens
+    * @param value weis paid for purchase
+    * @param amount amount of tokens purchased
+    */
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
 
     // Mapping with all the campaign supporters
     mapping(address => Supporter) public supportersMap;
@@ -76,10 +97,13 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
     // The minimum amount of tokens we need to sell to change the final distribution of tokens
     uint256 public constant LOWER_BOUND_LIMIT = 50 * 10**6 * 10**8;
 
-    function GimmerCrowdSale(uint256 startDate, uint256[5] _saleTokenPrices, uint256[5] _saleDates, uint256 _saleWeiLimitWithoutKYC, address _freezeWallet) 
-        Crowdsale(startDate, _saleDates[_saleDates.length - 1], _saleTokenPrices[0], msg.sender) public {
+    function GimmerCrowdSaleB(uint256 _startDate, uint256[5] _saleTokenPrices, uint256[5] _saleDates, uint256 _saleWeiLimitWithoutKYC, address _freezeWallet) {
+        require(_startDate >= now);
         require(_saleWeiLimitWithoutKYC > 0);
         require(_freezeWallet != address(0));
+
+        startTime = _startDate;
+        wallet = msg.sender;
         
         // copy args
         tokenPrices = _saleTokenPrices;
@@ -95,6 +119,8 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
 
         currentStage = Stages.Deployment;
         currentTokenPricePhase = 0;
+
+        token = new GimmerToken();
     }
 
     /**
@@ -114,7 +140,8 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
 
     function buyTokens(address beneficiary) public payable {
         require(beneficiary != address(0));
-        require(validPurchase());
+        //require(validPurchase()); //updateStage() checks for the date
+        require(msg.value != 0);
 
         updateStage();
         updateTokenPhase();
@@ -150,7 +177,8 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
         token.mint(beneficiary, tokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
-        forwardFunds();
+        wallet.transfer(msg.value);
+        //forwardFunds();
     }
 
     /**
@@ -258,12 +286,6 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
         return currentStage == _stage;
     }
 
-    // creates the token to be sold.
-    // override this method to have crowdsale of a specific mintable token.
-    function createTokenContract() internal returns (MintableToken) {
-        return new GimmerToken();
-    }
-
     /**
     * @dev Updates the current token sale phase the contract is
     * based on the current date
@@ -293,6 +315,7 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
             now >= startWithdrawalTime) {
             currentStage = Stages.FinishedSale;
 
+            // get 10%
             finishContract();
         }
     }

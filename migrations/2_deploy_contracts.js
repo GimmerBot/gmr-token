@@ -1,6 +1,6 @@
 var GimmerToken = artifacts.require("./GimmerToken.sol");
 var GimmerCrowdSale = artifacts.require("./GimmerCrowdSale.sol");
-//var GimmerCrowdSaleB = artifacts.require("./GimmerCrowdSaleB.sol");
+var GimmerCrowdSaleB = artifacts.require("./GimmerCrowdSaleB.sol");
 
 function getNow() {
     return new Number(((new Date).getTime()) / 1000.0);
@@ -16,7 +16,7 @@ function a(minutes) {
 }
 
 module.exports = function(deployer) {
-    return deployer.deploy(GimmerCrowdSale, // give the address of the crowd sale
+    deployer.deploy(GimmerCrowdSale, // give the address of the crowd sale
         a(30),
         [13158496, 13980902, 14803308, 15625714, 16448122], // GMR token prices
         [a(1400), a(2880), a(4320), a(5760), a(7200)], // GMR token dates, in Unix time
@@ -24,13 +24,11 @@ module.exports = function(deployer) {
         0x204d8e205bedc8e12bfc158cba6583966117e3c5 // frozen wallet address
     ); 
 
-    // return deployer.deploy(GimmerCrowdSaleB, // give the address of the crowd sale
-    //     a(30),
-    //     [13158496, 13980902, 14803308, 15625714, 16448122], // GMR token prices
-    //     [a(1440), a(2880), a(4320), a(5760), a(7200)], // GMR token dates, in Unix time
-    //     1 * Math.pow(10, 8), // minimum amount of tokens the person can buy (1 GMR token and the 8 digits)
-    //     50000000000000000000, // temporarily 50 Eth //17106045000000000000000,// pre sale limit in WEI (17106 ethers/13 mil GMR tokens)
-    //     379982636313, // No KYC 5 ETH limit
-    //     90000000 * Math.pow(10, 8) // maximum ammount of tokens that can be sold during the entire sale
-    // ); 
+    deployer.deploy(GimmerCrowdSaleB, // give the address of the crowd sale
+        a(30),
+        [13158496, 13980902, 14803308, 15625714, 16448122], // GMR token prices
+        [a(1400), a(2880), a(4320), a(5760), a(7200)], // GMR token dates, in Unix time
+        5 * Math.pow(10, 18), // maximum amount of Wei the person can spend without KYC        
+        0x204d8e205bedc8e12bfc158cba6583966117e3c5 // frozen wallet address
+    ); 
 };
