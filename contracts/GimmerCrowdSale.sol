@@ -90,7 +90,7 @@ contract GimmerCrowdSale is Ownable {
     uint256 public totalTokensFrozen;
 
     // Maximum amount that can be sold during the Pre Sale period
-    uint256 public constant PRE_SALE_TOKEN_CAP = 10000 * 10**8;//13 * 10**6 * 10**8;\
+    uint256 public constant PRE_SALE_TOKEN_CAP = 10000 * 10**8;//15 * 10**6 * 10**8;\
 
     // The minimum amount needed to receive in Wei to change the price to preSaleBonusPrice
     uint256 public constant PRE_SALE_BONUS_WEI_MIN = 3000 * 10**18;
@@ -104,7 +104,7 @@ contract GimmerCrowdSale is Ownable {
     // The minimum amount of tokens we need to sell to change the final distribution of tokens
     uint256 public constant LOWER_BOUND_TOKEN_LIMIT = 50 * 10**6 * 10**8;
 
-    function GimmerCrowdSaleB(uint256 _startDate, uint256[5] _saleTokenPrices, uint256[5] _saleDates, uint256 _saleWeiLimitWithoutKYC, address _freezeWallet, uint256 _preSaleBonusPrice) {
+    function GimmerCrowdSale(uint256 _startDate, uint256[5] _saleTokenPrices, uint256[5] _saleDates, uint256 _saleWeiLimitWithoutKYC, address _freezeWallet, uint256 _preSaleBonusPrice) {
         require(_startDate >= now);
         require(_saleWeiLimitWithoutKYC > 0);
         require(_freezeWallet != address(0));
@@ -158,11 +158,11 @@ contract GimmerCrowdSale is Ownable {
 
         uint256 weiAmount = msg.value;
         uint256 totalTokensSold;
+        uint256 currentTokenPrice;
         uint256 tokens;
+
         if (atStage(Stages.PreSale)) {
             // calculate token amount to be created
-            uint256 currentTokenPrice;
-
             if (weiAmount > PRE_SALE_BONUS_WEI_MIN) {
                 currentTokenPrice = preSaleBonusPrice;
             } else {
@@ -178,7 +178,7 @@ contract GimmerCrowdSale is Ownable {
             require(totalTokensSold <= PRE_SALE_TOKEN_CAP);
         } else if (atStage(Stages.Sale)) {
             // calculate token amount to be created
-            uint256 currentTokenPrice = tokenPrices[currentTokenPricePhase];
+            currentTokenPrice = tokenPrices[currentTokenPricePhase];
             tokens = weiAmount.div(currentTokenPrice);
             require(tokens > MIN_TOKEN_TRANSACTION);
         
@@ -205,7 +205,6 @@ contract GimmerCrowdSale is Ownable {
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
         wallet.transfer(msg.value);
-        //forwardFunds();
     }
 
     /**
@@ -341,8 +340,7 @@ contract GimmerCrowdSale is Ownable {
         if (currentStage == Stages.Sale &&
             now >= startWithdrawalTime) {
             currentStage = Stages.FinishedSale;
-
-            // get 10%
+            
             finishContract();
         }
     }
@@ -365,6 +363,8 @@ contract GimmerCrowdSale is Ownable {
         token.mint(wallet, tenPC);
 
         token.finishMinting();
+        token.unpause();
+
         token.transferOwnership(wallet);
     }
 }

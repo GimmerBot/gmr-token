@@ -6,11 +6,11 @@ import '../submodules/zeppelin-solidity/contracts/lifecycle/Pausable.sol';
 contract GimmerToken is MintableToken, Pausable  {
     // this needs to be lowercase to be read by the wallet clients automatically,
     // even though certification says constants should be upper case underlined
-    string public constant name = "Gimmer";
+    string public constant name = "GimmerToken";
     string public constant symbol = "GMR";  
     uint8 public constant decimals = 8;
 
-    uint256 public constant INITIAL_SUPPLY = 0;//25000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 25000000 * (10 ** uint256(decimals));
    
     function GimmerToken() public {
         totalSupply = INITIAL_SUPPLY;

@@ -25,12 +25,12 @@ var AfterSalePrice = new BigNumber(32896244);
 var MinTokenTransaction = ToToken;
 var _1Eth = EthToWei;
 
-var StartDate;
-var Phase1Date;
-var Phase2Date;
-var Phase3Date;
-var Phase4Date;
-var Phase5Date;
+var StartDate = latestTime() + duration.minutes(31);
+var Phase1Date = latestTime() + duration.minutes(1441);
+var Phase2Date = latestTime() + duration.minutes(2881);
+var Phase3Date = latestTime() + duration.minutes(4321);
+var Phase4Date = latestTime() + duration.minutes(5761);
+var Phase5Date = latestTime() + duration.minutes(7201);
 
 var PreSaleWeiCap = new BigNumber(10000).mul(ToToken) // 5000 tokens presale cap
                         .mul(Phase1Price).add(Phase1Price);
@@ -83,13 +83,6 @@ contract ('GimmerCrowdSale', function (caccounts) {
     before(async function() {
         //Advance to the next block to correctly read time in the solidity "now" function interpreted by testrpc
         await advanceBlock();
-
-        StartDate = latestTime() + duration.minutes(31);
-        Phase1Date = latestTime() + duration.minutes(1441);
-        Phase2Date = latestTime() + duration.minutes(2881);
-        Phase3Date = latestTime() + duration.minutes(4321);
-        Phase4Date = latestTime() + duration.minutes(5761);
-        Phase5Date = latestTime() + duration.minutes(7201);
     });
 
     describe('Deploying Token Sale', function() {
@@ -98,8 +91,7 @@ contract ('GimmerCrowdSale', function (caccounts) {
             await crowdSale.send(1).should.be.rejectedWith(EVMThrow);
         });
 
-        it('Should deploy the contract to stage 1 - PreSale', async function()
-        {
+        it('Should deploy the contract to stage 1 - PreSale', async function() {
             var crowdSale = await GimmerCrowdSale.deployed();
             var initialStage = await crowdSale.getCurrentStage.call();
             
