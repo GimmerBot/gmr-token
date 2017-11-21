@@ -36,7 +36,7 @@ truffle develop
 
 ## Built With
 
-* [OpenZeppelin](https://github.com/OpenZeppelin/zeppelin-solidity) - The Solidity framework used, though we used a fork from it managed by Gimmer, available here: https://github.com/GimmerBot/zeppelin-solidity
+* [OpenZeppelin](https://github.com/OpenZeppelin/zeppelin-solidity)
 
 ## Comments
 ### GimmerCrowdSale and GimmerCrowdSaleB

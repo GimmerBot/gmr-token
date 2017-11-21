@@ -1,14 +1,15 @@
 pragma solidity ^0.4.17;
 
-import '../submodules/zeppelin-solidity/contracts/crowdsale/Crowdsale.sol';
-import '../submodules/zeppelin-solidity/contracts/ownership/Ownable.sol';
+import '../submodules/zeppelin-solidity/contracts/math/SafeMath.sol';
 import './GimmerToken.sol';
 
 /**
 * @title Gimmer Crowd Sale
 * @dev Gimmer Crowd Sale contract
 */
-contract GimmerCrowdSale is Crowdsale, Ownable {
+contract GimmerCrowdSale is Ownable {
+    using SafeMath for uint256;
+
     /**
     * @dev All the stages the contract has
     */
@@ -20,7 +21,7 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
     }
 
     /**
-    * Supporter structure, which allows us to track
+    * @dev Supporter structure, which allows us to track
     * how much the user has bought so far, and if he's flagged as known
     */
     struct Supporter {
@@ -29,6 +30,27 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
         // if the user has KYC flagged
         bool hasKYC;
     }
+
+    /// Crowdsale Contract
+    // The token being sold
+    GimmerToken public token;
+    // start and end timestamps where investments are allowed (both inclusive)
+    uint256 public startTime;
+    //uint256 public endTime;
+    // address where funds are collected
+    address public wallet;
+    // amount of raised money in wei
+    uint256 public weiRaised;
+    
+    /**
+    * event for token purchase logging
+    * @param purchaser who paid for the tokens
+    * @param beneficiary who got the tokens
+    * @param value weis paid for purchase
+    * @param amount amount of tokens purchased
+    */
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
 
     // Mapping with all the campaign supporters
     mapping(address => Supporter) public supportersMap;
@@ -41,6 +63,9 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
 
     // Date to end the presale (cached from tokenDates[0])
     uint256 public preSaleEndTime;
+
+    // PreSale bonus pricing for buyers above PRE_SALE_BONUS_WEI_MIN
+    uint256 public preSaleBonusPrice;
 
     // Beginning date to the withdrawal (cached from tokenDates[last])
     uint256 public startWithdrawalTime;
@@ -65,7 +90,10 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
     uint256 public totalTokensFrozen;
 
     // Maximum amount that can be sold during the Pre Sale period
-    uint256 public constant PRE_SALE_TOKEN_CAP = 10000 * 10**8;//13 * 10**6 * 10**8;
+    uint256 public constant PRE_SALE_TOKEN_CAP = 10000 * 10**8;//13 * 10**6 * 10**8;\
+
+    // The minimum amount needed to receive in Wei to change the price to preSaleBonusPrice
+    uint256 public constant PRE_SALE_BONUS_WEI_MIN = 3000 * 10**18;
 
     // The maximum amount of tokens that can be sold during the entire sale
     uint256 public constant TOKEN_SALE_CAP = 100 * 10**6 * 10**8;
@@ -74,18 +102,22 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
     uint256 public constant MIN_TOKEN_TRANSACTION = 1 * 10**8;
 
     // The minimum amount of tokens we need to sell to change the final distribution of tokens
-    uint256 public constant LOWER_BOUND_LIMIT = 50 * 10**6 * 10**8;
+    uint256 public constant LOWER_BOUND_TOKEN_LIMIT = 50 * 10**6 * 10**8;
 
-    function GimmerCrowdSale(uint256 startDate, uint256[5] _saleTokenPrices, uint256[5] _saleDates, uint256 _saleWeiLimitWithoutKYC, address _freezeWallet) 
-        Crowdsale(startDate, _saleDates[_saleDates.length - 1], _saleTokenPrices[0], msg.sender) public {
+    function GimmerCrowdSaleB(uint256 _startDate, uint256[5] _saleTokenPrices, uint256[5] _saleDates, uint256 _saleWeiLimitWithoutKYC, address _freezeWallet, uint256 _preSaleBonusPrice) {
+        require(_startDate >= now);
         require(_saleWeiLimitWithoutKYC > 0);
         require(_freezeWallet != address(0));
+
+        startTime = _startDate;
+        wallet = msg.sender;
         
         // copy args
         tokenPrices = _saleTokenPrices;
         tokenDates = _saleDates;
         saleWeiLimitWithoutKYC = _saleWeiLimitWithoutKYC;
         freezeWallet = _freezeWallet;
+        preSaleBonusPrice = _preSaleBonusPrice;
 
         // initialize the contract
         preSaleEndTime = _saleDates[0];                                                     
@@ -95,6 +127,8 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
 
         currentStage = Stages.Deployment;
         currentTokenPricePhase = 0;
+
+        token = new GimmerToken();
     }
 
     /**
@@ -105,32 +139,52 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
     }
 
     /**
-    * @dev Receives Wei and re-routes the payment
-    * to the correct function based on the current contract stage
+    * @dev Buys tokens and sends them to the caller
     */
     function buy() public payable {
         buyTokens(msg.sender);
     }
 
+    /**
+    * @dev Buys tokens and sends them to a specific address
+    * @param beneficiary The address that will receive the GMR tokens
+    */
     function buyTokens(address beneficiary) public payable {
         require(beneficiary != address(0));
-        require(validPurchase());
+        require(msg.value != 0);
 
         updateStage();
         updateTokenPhase();
 
-        // calculate token amount to be created
-        uint256 currentTokenPrice = tokenPrices[currentTokenPricePhase];
         uint256 weiAmount = msg.value;
-        uint256 tokens = weiAmount.div(currentTokenPrice);
-        require(tokens > MIN_TOKEN_TRANSACTION);
-        
-        uint256 totalTokensSold = tokensSold.add(tokens);
-
+        uint256 totalTokensSold;
+        uint256 tokens;
         if (atStage(Stages.PreSale)) {
+            // calculate token amount to be created
+            uint256 currentTokenPrice;
+
+            if (weiAmount > PRE_SALE_BONUS_WEI_MIN) {
+                currentTokenPrice = preSaleBonusPrice;
+            } else {
+                currentTokenPrice = tokenPrices[currentTokenPricePhase];
+            }
+            
+            tokens = weiAmount.div(currentTokenPrice);
+            require(tokens > MIN_TOKEN_TRANSACTION);
+        
+            totalTokensSold = tokensSold.add(tokens);
+
             // presale has a hardcap of tokens that can be sold
             require(totalTokensSold <= PRE_SALE_TOKEN_CAP);
-        } else if (!atStage(Stages.Sale)) {
+        } else if (atStage(Stages.Sale)) {
+            // calculate token amount to be created
+            uint256 currentTokenPrice = tokenPrices[currentTokenPricePhase];
+            tokens = weiAmount.div(currentTokenPrice);
+            require(tokens > MIN_TOKEN_TRANSACTION);
+        
+            totalTokensSold = tokensSold.add(tokens);
+        } else {
+            // not on presale, not on sale = no tokens
             revert();
         }
         require(totalTokensSold <= TOKEN_SALE_CAP);
@@ -150,7 +204,8 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
         token.mint(beneficiary, tokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
-        forwardFunds();
+        wallet.transfer(msg.value);
+        //forwardFunds();
     }
 
     /**
@@ -258,12 +313,6 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
         return currentStage == _stage;
     }
 
-    // creates the token to be sold.
-    // override this method to have crowdsale of a specific mintable token.
-    function createTokenContract() internal returns (MintableToken) {
-        return new GimmerToken();
-    }
-
     /**
     * @dev Updates the current token sale phase the contract is
     * based on the current date
@@ -293,16 +342,22 @@ contract GimmerCrowdSale is Crowdsale, Ownable {
             now >= startWithdrawalTime) {
             currentStage = Stages.FinishedSale;
 
+            // get 10%
             finishContract();
         }
     }
 
+    /**
+    * @dev Ends the operation of the contract
+    */
     function finishContract() internal {
         uint256 tenPC = tokensSold.div(10);
         uint256 totalTokens = tokensSold.add(tenPC);
         
-        if (tokensSold < LOWER_BOUND_LIMIT) {
-            totalTokensFrozen = LOWER_BOUND_LIMIT.sub(totalTokens);
+        // if we failed to sell the lower bound limit of tokens,
+        // we'll have to mint the remaining tokens and send to a frozen wallet
+        if (tokensSold < LOWER_BOUND_TOKEN_LIMIT) {
+            totalTokensFrozen = LOWER_BOUND_TOKEN_LIMIT.sub(totalTokens);
             token.mint(freezeWallet, totalTokensFrozen);
         }
 
