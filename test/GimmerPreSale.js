@@ -44,19 +44,15 @@ contract ('GimmerPreSale', async function (caccounts) {
     var secAcc = caccounts[1];
     var thirdAcc = caccounts[2];
 
-    // List of Functions
-    
-    before(async function() {
-        this.startTime = latestTime() + duration.weeks(1);
-        this.endTime =   this.startTime + duration.weeks(1);
-        this.afterEndTime = this.endTime + duration.seconds(1);
-    
-        this.crowdsale = await GimmerPreSale.new(this.startTime, this.endTime, PreSalePrice, PreSaleBonusPrice, secAcc);
-        this.totalBought = new BigNumber(0);
-    });
-
     describe('KYC Tests', function(){
-        it('Should wait till campaign starts', async function () {
+        it('Should deploy the contract and wait till the campaign starts', async function () {
+            this.startTime = latestTime() + duration.weeks(1);
+            this.endTime =   this.startTime + duration.weeks(1);
+            this.afterEndTime = this.endTime + duration.seconds(1);
+        
+            this.crowdsale = await GimmerPreSale.new(this.startTime, this.endTime, PreSalePrice, PreSaleBonusPrice, secAcc);
+            this.totalBought = new BigNumber(0);
+
             await increaseTimeTo(this.startTime);
             await advanceBlock();
         });
@@ -150,47 +146,59 @@ contract ('GimmerPreSale', async function (caccounts) {
         });
     });
 
-    // describe('KYC Tests', function(){
-    //     it('Should wait till campaign starts', async function () {
-    //         await increaseTimeTo(this.startTime);
-    //         await advanceBlock();
-    //     });
+    describe('1 Person Buys All', function(){
+        it('Should deploy the contract and wait till the campaign starts', async function () {
+            this.startTime = latestTime() + duration.weeks(1);
+            this.endTime =   this.startTime + duration.weeks(1);
+            this.afterEndTime = this.endTime + duration.seconds(1);
+        
+            this.crowdsale = await GimmerPreSale.new(this.startTime, this.endTime, PreSalePrice, PreSaleBonusPrice, secAcc);
+            this.totalBought = new BigNumber(0);
 
-    //     it('Should change KYC Manager to third account', async function () {
-    //         var crowdSale = this.crowdsale;
+            await increaseTimeTo(this.startTime);
+            await advanceBlock();
+        });
 
-    //         var startKycManager = await crowdSale.kycManager();
-    //         await crowdSale.setKYCManager(thirdAcc);
-    //         var endKycManager = await crowdSale.kycManager();
+        it('Should approve KYC of the primary account', async function () {
+            var crowdSale = this.crowdsale;
+            await crowdSale.approveUserKYC(mainAcc, {from:secAcc});
+            var userHasKyc = await crowdSale.userHasKYC(mainAcc);
+            assert.equal(userHasKyc, true, "KYC has not been flagged");
+        });
+
+        it('Should reject buying more than pre sale cap - ' + PreSaleTokenCap.mul(PreSaleBonusPrice).add(PreSaleBonusPrice).div(EthToWei) + ' ETH', async function () {
+            var amount = PreSaleTokenCap.mul(PreSaleBonusPrice).add(PreSaleBonusPrice);
+            var crowdSale = this.crowdsale;
+            await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
+        });
+
+        it('Should buy the rest of the tokens to reach the pre sale cap: ' + PreSaleTokenCap + ' ETH', async function () {
+            var crowdSale = this.crowdsale;
+            var rest = PreSaleTokenCap.sub(this.totalBought);
+            var val = PreSaleTokenCap;
             
-    //         assert.equal(startKycManager, secAcc, "KYC Manager should start as second account");
-    //         assert.equal(endKycManager, thirdAcc, "KYC Manager should end as third account");
-    //     });
+            // calculate how much wei to send based on the total left on contract
+            var total = new BigNumber(rest).mul(PreSaleBonusPrice);
+            var tokens = await doBuy(crowdSale, mainAcc, total, PreSaleBonusPrice);
+            this.totalBought = this.totalBought.add(tokens);
 
-    //     it('Should not approve KYC executing from secondary account', async function () {
-    //         var crowdSale = this.crowdsale;
-    //         await crowdSale.approveUserKYC(mainAcc).should.be.rejectedWith(EVMThrow);
-    //     });
+            var tokensSold = await crowdSale.tokensSold();
+            assert(tokensSold, PreSaleTokenCap, "Should've bought all the tokens in the PreSale contract");
+        });
 
-    //     it('Should approve KYC when executing from third account', async function () {
-    //         var crowdSale = this.crowdsale;
-    //         await crowdSale.approveUserKYC(mainAcc, {from:thirdAcc});
-    //         var userHasKyc = await crowdSale.userHasKYC(mainAcc);
-    //         assert.equal(userHasKyc, true, "KYC has not been flagged");
-    //     });
+        it('Should reject buying tokens after sale has reached its cap', async function () {
+            var amount = 1;
+            var crowdSale = this.crowdsale;
+            await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
+        });
 
-    //     it('Should buy 1 ETH worth of tokens at PreSale', async function () {
-    //         var crowdSale = this.crowdsale;
-    //         await doBuy(crowdSale, mainAcc, EthToWei, 1, PreSalePrice);
-    //     });
+        it('Should reject buying tokens after end', async function () {
+            await increaseTimeTo(this.afterEndTime);
+            await advanceBlock();
 
-    //     it('Should reject buying tokens after end', async function () {
-    //         await increaseTimeTo(this.afterEndTime);
-    //         await advanceBlock();
-
-    //         var amount = 1;
-    //         var crowdSale = this.crowdsale;
-    //         await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
-    //     });
-    // });
+            var amount = 1;
+            var crowdSale = this.crowdsale;
+            await crowdSale.send(amount.toString()).should.be.rejectedWith(EVMThrow);
+        });
+    });
 });
