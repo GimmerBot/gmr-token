@@ -95,6 +95,9 @@ contract GimmerCrowdSale is Ownable {
     // The minimum amount needed to receive in Wei to change the price to preSaleBonusPrice
     uint256 public constant PRE_SALE_BONUS_WEI_MIN = 3000 * 10**18;
 
+    // The minimum allowed transaction in wei on the presale
+    uint256 public constant PRE_SALE_WEI_MIN_TRANSACTION = 300 * 10**18;
+
     // The maximum amount of tokens that can be sold during the entire sale
     uint256 public constant TOKEN_SALE_CAP = 100 * 10**6 * 10**8;
 
@@ -162,6 +165,8 @@ contract GimmerCrowdSale is Ownable {
         uint256 tokens;
 
         if (atStage(Stages.PreSale)) {
+            require(weiAmount > PRE_SALE_WEI_MIN_TRANSACTION);
+            
             // calculate token amount to be created
             if (weiAmount > PRE_SALE_BONUS_WEI_MIN) {
                 currentTokenPrice = preSaleBonusPrice;

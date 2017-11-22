@@ -1,0 +1,271 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% This is a simple template for a LaTeX document using the "article" class.
+% See "book", "report", "letter" for other types of document.
+
+\documentclass[11pt]{article} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+%%% Examples of Article customizations
+% These packages are optional, depending whether you want the features they provide.
+% See the LaTeX Companion or other references for full information.
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper} % or letterpaper (US) or a5paper or....
+% \geometry{margin=2in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
+
+\usepackage{graphicx} % support the \includegraphics command and options
+
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+% \usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{enumitem}
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+% These packages are all incorporated in the memoir class to one degree or another...
+
+%%% HEADERS & FOOTERS
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy} % options: empty , plain , fancy
+\renewcommand{\headrulewidth}{0pt} % customise the layout...
+\lhead{}\chead{}\rhead{}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+%%% ToC (table of contents) APPEARANCE
+\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+%%% END Article customizations
+
+%%% The "real" document content comes below...
+
+\title{Gimmer Token Sale Contracts}
+\author{Lucas Assis Ribeiro}
+\date{November 22, 2017} % Activate to display a given date or no date (if empty),
+         % otherwise the current date is printed 
+
+\begin{document}
+\maketitle
+
+\section {Gimmer Pre Sale}
+
+The Gimmer Pre Sale contract is basically a crowdsale and token contract used as a proxy during the presale for the closed sale before opening to the full public.
+
+\subsection{Constructor}
+\subsubsection{Start Time}
+The start date of the contract in Unix time. \\
+24th November 2018 12:00 UTC\\
+Timestamp 1543060800
+
+\subsubsection{End Time}
+The ending date for the contract in Unix time.\\
+2nd January 2019 12:00 UTC\\
+Timestamp 1546430400
+
+\subsubsection{Price}
+The default price to used in the transactions.\\
+11666666 WEI = 1 GMR
+
+\subsubsection{Bonus Price}
+The price to use for transactions that go above the Pre Sale Bonus Min (3000 ETH)\\
+9999999 WEI = 1 GMR
+
+
+\subsection{Constants}
+\begin{itemize}
+\item Pre Sale Token Cap: 15,000,000.00000000 GMR
+\item Pre Sale Bonus Wei Min: 3,000 ETH
+\item Pre Sale Wei Min Transaction: 300 ETH (never really used)
+\end{itemize}
+
+\subsection{Parameters}
+\begin{itemize}
+\item Initial Supply: 0
+\item Name: "GimmerPreSale"
+\item Symbol: "GMRP"
+\item Decimals: 8
+\end{itemize}
+
+\subsection{Functions}
+
+\subsubsection{buyTokens(address beneficiary)}
+Public
+
+\subsubsection{approveUserKYC(address user)}
+Public
+
+\subsubsection{setKYCManager(address newKYCManager)}
+Public
+
+\subsubsection{setKYCManager(address newKYCManager)}
+Public
+
+\subsubsection{userHasKYC(address user)}
+Public Constant
+
+\subsubsection{getKYCManager(r)}
+Public Constant
+
+\subsubsection{mint(address to, uint256 amount)}
+Internal
+
+
+\section{Gimmer Token}
+
+Gimmer Token is the contract for the GMR Tokens in the Gimmer ecosystem.
+It's a Mintable Token, meaning the Crowdsale actually creates the tokens before each sale.
+The token also inherits the Pausable lifecycle contract, as it starts paused - so no trading can occur before the crowd sale is over and the token is unpaused.
+
+\subsection{Parameters}
+
+\begin{itemize}
+\item Initial Supply: 0
+\item Name: "GimmerToken"
+\item Symbol: "GMR"
+\item Decimals: 8
+\end{itemize}
+
+
+\section{Gimmer Crowd Sale}
+
+Gimmer Crowd Sale is the main contract for the token sale.
+
+\subsection{Initial Implementation}
+Initially the contract inherited straight from OpenZeppelin's Crowdsale, but the end result was more complex than was expected - it works, but with so much redundant data that it should only be used for testing.
+
+The main differences from the OpenZeppelin Crowdsale:
+
+\begin{itemize}
+\item Our GMR Token has 8 decimals, lower than the 18 used in ETH. The Crowdsale contract uses a rate variable and a multiplier, but in our case we need to divide and truncate.
+\item The pricing in the contract is dependent on the current date, so either way the pricing variable would just be stored there and unused.
+\item The contract has a Stage/Phase system, which always keeps tracks of dates and ending times. The crowdsale was also doing that, just adding redundancy/points of failure.
+\item We have direct access to our GimmerToken interfaced correctly with the contract, so we can call unpause() directly from the contract and eliminate 1 step that is currently needed from the main wallet after the sale (unverified)
+\end{itemize}
+
+\subsection{Current Implementation}
+The current implementation uses the Crowdsale contract, but in a different way; it inherits only from Ownable, and the Crowdsale parts are copy pasted and modified on demand from the OpenZeppelin version.
+
+\subsection{Constants}
+
+\begin{itemize}
+\item Pre Sale Token Cap: 15,000,000.00000000 GMR
+\item Pre Sale Bonus Wei Min: 3,000 ETH
+\item Pre Sale Wei Min Transaction: 300 ETH
+\item Token Sale Cap: 100,000,000.00000000 GMR
+\item Min Token Transaction: 1.00000000 GMR
+\item Lower Bound Token Limit: 50,000,000.00000000 GMR
+\end{itemize}
+
+\subsection{Constructor}
+
+\subsubsection{Start Date}
+The date the contract will change from Deployment stage
+
+
+\subsubsection{Sale Token Prices}
+All the prices the token should have based on each date provided by the following parameter.
+Current prices being used (unverified): 
+
+\begin{itemize}
+\item 13158496
+\item 13980902
+\item 14803308
+\item 15625714
+\item 16448122
+\end{itemize}
+
+
+\subsubsection{Sale Token Dates}
+The ending date of each token pricing phase in Unix time.
+Current dates being used:
+
+\begin{itemize}
+\item 2nd January 2018 12:00 UTC or when the 15,000,000 GMR presale cap is reached. Which ever happens first.
+\item 10th January 11:59 UTC
+\item 17th January 11:59 UTC
+\item 24th January 11:59 UTC
+\item 31st January 11:59 UTC
+\end{itemize}
+
+
+\subsubsection{Sale Wei Limit Without KYC}
+The limit of Wei an user can spend in this contract before being blocked and needing KYC approval.
+5 ETH
+This can be updated by the owner of the contract by using updateSaleLimitWithoutKYC, see Functions
+
+
+\subsubsection{Freeze Wallet}
+The wallet where the frozen funds will go incase we sell lower than the lower bound limit.
+
+
+\subsubsection{Pre Sale Bonus Price}
+The pricing to be used for the tokens if the user spends more than the min for bonus in PreSale
+Value being used (for referency only, its wrong): \\
+11263626
+
+\subsection{Stages}
+The contract has 4 distinct stages, not to be confused with the pricing phases (which are basically substages for the PreSale and Sale stages).
+
+\subsubsection{Deployment}
+This is the state the contract starts in. The stage means the contract is waiting for the start date of the crowdsale to move to PreSale.
+While in Deployment, all buying operations are blocked.\\
+When we get to the starting date, all operations are 'automatically' unlocked. Either the owner of the contract can call forceUpdateState() or the first user to send a transaction to the contract will cause it to update to PreSale stage.
+
+\subsubsection{PreSale}
+The PreSale state is the first stage that allows the sale of tokens, but it's capped. This is considered the first pricing phase (see section 2.7 for Pricing Phases), which will use the pre-discounted price. If the sender buys over the Pre Sale Bonus Wei Min the price drops to the the Bonus Pre Sale Pricing, which has a 40\% bonus instead of the 30\% PreSale default.
+While in PreSale time, the contract cannot mint more than the Pre Sale Token Cap (15 million GMR). \\
+Transactions need to be at least 300 ETH to go through, also, if a user buys more than 3000 ETH the transaction will process with the custom presale bonus price.\\
+After the date for the Phase1 to end arrives, we move automatically to the Sale state.\\
+Users need KYC to do any kind of operation on PreSale.
+ 
+\subsubsection{Sale}
+At the after sale it's where the other 4 token phases happen. No custom pricing rules, just KYC limit and pricing by date.\\
+We begin at Phase2 of the token pricing.\\
+When we reach the end of the last token pricing phase the contract execute the finishContract() function, which:\\
+- Takes 10\% of the total amount of tokens sold and forwards them to the creator of the contract\\
+- If we have sold less than the lower bound limit (50 million tokens), after taking the 10\% mints the rest of the lower bound limit (so 50 millions - total sold - 10\%) and sends them to a frozen wallet. 
+
+\subsubsection{FinishedSale}
+This is the stage where the contract is done - it has given ownership of the token back to the owner of the contract
+
+\subsection{Pricing Phases}
+The contract has 5 pricing phases, being the first one the presale phase, and the other 4 standard sale.
+
+\subsection{KYC}
+Due to Know Your Customer rules, the contract keeps track of all accounts that acquire tokens. To buy more than the allowed limit, the user must be flagged by the kycManager account.
+
+\subsection{Parameters}
+\begin{itemize}
+\item currentStage
+\item currentTokenPricingPhase
+\item currentStage
+\end{itemize}
+
+\subsection{Functions}
+\begin{itemize}
+\item buyTokens
+\item approveUserKYC
+\item updateSaleLimitWithoutKYC
+\item forceUpdateState
+\end{itemize}
+
+\subsection{Events}
+
+TokenPurchase:
+
+\end{document}

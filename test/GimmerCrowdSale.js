@@ -20,7 +20,6 @@ var Phase2Price = new BigNumber(13980902);
 var Phase3Price = new BigNumber(14803308);
 var Phase4Price = new BigNumber(15625714);
 var Phase5Price = new BigNumber(16448122);
-var AfterSalePrice = new BigNumber(32896244);
 
 var MinTokenTransaction = ToToken;
 var _1Eth = EthToWei;
@@ -32,7 +31,7 @@ var Phase3Date = latestTime() + duration.minutes(4321);
 var Phase4Date = latestTime() + duration.minutes(5761);
 var Phase5Date = latestTime() + duration.minutes(7201);
 
-var PreSaleWeiCap = new BigNumber(10000).mul(ToToken) // 5000 tokens presale cap
+var PreSaleWeiCap = new BigNumber(15).mul(1000000).mul(ToToken) // 5000 tokens presale cap
                         .mul(Phase1Price).add(Phase1Price);
 var Phase1_1EthWorth = EthToWei.div(Phase1Price).truncated();
 

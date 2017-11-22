@@ -10,7 +10,7 @@ contract GimmerToken is MintableToken, Pausable  {
     string public constant symbol = "GMR";  
     uint8 public constant decimals = 8;
 
-    uint256 public constant INITIAL_SUPPLY = 25000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 0;//25000000 * (10 ** uint256(decimals));
    
     function GimmerToken() public {
         totalSupply = INITIAL_SUPPLY;
