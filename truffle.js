@@ -16,6 +16,12 @@ module.exports = {
       network_id: "*", // Match any network id
       from: "3e86Fe56342a9A3e2476eb2Aeb508459cBF1364F",
       gas: 4712388
+    },
+    ganache: {
+      host: "localhost",
+      port: 4020,
+      network_id: "*", // Match any network id
+      from: "627306090abaB3A6e1400e9345bC60c78a8BEf57",
     }
     //,
     //live: {

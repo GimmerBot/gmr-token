@@ -68,14 +68,29 @@ The Gimmer Pre Sale contract is basically a crowdsale and token contract used as
 
 \subsection{Constructor}
 \subsubsection{Start Time}
+Start date of the contract in Unix time (see Variables - Start Time)
+
+\subsubsection{End Time}
+End date of the contract in Unix time (see Variables - End Time)
+
+\subsubsection{Price}
+Price for transactions below 3000 ETH (see Variables - Price).
+
+\subsubsection{Bonus Price}
+Price for transactions above 3000 ETH (see Variables - Bonus Price).
+
+
+\subsection{Variables}
+
+\subsubsection{Start Time}
 The start date of the contract in Unix time. \\
-24th November 2018 12:00 UTC\\
-Timestamp 1543060800
+24th November 2017 12:00 UTC\\
+Timestamp 1511524800 
 
 \subsubsection{End Time}
 The ending date for the contract in Unix time.\\
-2nd January 2019 12:00 UTC\\
-Timestamp 1546430400
+2nd January 2018 12:00 UTC\\
+Timestamp 1514894400 
 
 \subsubsection{Price}
 The default price to used in the transactions.\\
@@ -85,12 +100,25 @@ The default price to used in the transactions.\\
 The price to use for transactions that go above the Pre Sale Bonus Min (3000 ETH)\\
 9999999 WEI = 1 GMR
 
+\subsubsection{Wallet}
+The wallet that the Wei funds will be forwarded to
+
+\subsubsection{KYC Manager}
+The wallet that is able to approve the KYC of supporters. 
+Can be changed by the owner of the contract by calling setKYCManager.
+
+\subsubsection{Tokens Sold}
+\subsubsection{WEI Raised}
 
 \subsection{Constants}
 \begin{itemize}
 \item Pre Sale Token Cap: 15,000,000.00000000 GMR
 \item Pre Sale Bonus Wei Min: 3,000 ETH
 \item Pre Sale Wei Min Transaction: 300 ETH (never really used)
+\end{itemize}
+
+\begin{itemize}
+\item Test
 \end{itemize}
 
 \subsection{Parameters}
@@ -123,6 +151,30 @@ Public Constant
 
 \subsubsection{mint(address to, uint256 amount)}
 Internal
+
+\subsection{Tests}
+
+\subsubsection{Expected Values}
+
+\begin{itemize}
+    \item 30\% Price: 11666666 WEI for 0.00000001 GMR
+    \item 40\% Price:  9999999 WEI for 0.00000001 GMR
+\end{itemize}
+
+Pricing
+\begin{itemize}
+    \item 1 ETH = 780 GMR
+    \item 300 ETH = 234000.01497600 GMR (30\% bonus)
+    \item 3000 ETH = 2520000.19152001 GMR (40\% bonus)
+\end{itemize}
+
+
+\subsubsection{KYC}
+\begin{itemize}
+    \item Change KYC Manager to Third account
+    \item Approve Primary account from Third account
+    \item Buy 1 ETH
+\end{itemize}
 
 
 \section{Gimmer Token}
@@ -204,8 +256,8 @@ Current dates being used:
 
 
 \subsubsection{Sale Wei Limit Without KYC}
-The limit of Wei an user can spend in this contract before being blocked and needing KYC approval.
-5 ETH
+The limit of Wei an user can spend in this contract before being blocked and needing KYC approval.\\
+5 ETH\\
 This can be updated by the owner of the contract by using updateSaleLimitWithoutKYC, see Functions
 
 

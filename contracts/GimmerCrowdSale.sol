@@ -251,10 +251,6 @@ contract GimmerCrowdSale is Ownable {
         kycManager = _newKYCManager;
     }
 
-    function getTotalTokensSold() public constant returns (uint256) {
-        return tokensSold;
-    }
-
     /**
     * @dev Returns if an users has KYC approval or not
     * @return A boolean representing the user's KYC status
@@ -264,35 +260,11 @@ contract GimmerCrowdSale is Ownable {
     }
 
     /**
-    * @dev Returns the address of the token contract
-    * @return An address for the GimmerToken
-    */
-    function getTokenContract() public constant returns (address) {
-        return token;
-    }
-
-    /**
-    * @dev Returns the address of the account that is able to flag supporters' KYC
-    * @return an address representing the account that manages KYC approval
-    */
-    function getKYCManager() public constant returns (address) {
-        return kycManager;
-    }
-
-    /**
     * @dev Returns the current token price based on the current sale phase
     * @return An uint256 representing the current token price
     */
     function getTokenPrice() public constant returns (uint256) {
         return tokenPrices[getCurrentTokenPricePhase()];
-    }
-
-    /**
-    * @dev returns the stage the contract is currently in
-    * @return an uint256 representing the current stage the contract is in
-    */
-    function getCurrentStage() public constant returns (Stages) {
-        return currentStage;
     }
 
     /**

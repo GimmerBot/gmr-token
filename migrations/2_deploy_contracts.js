@@ -17,19 +17,20 @@ function a(minutes) {
 }
 
 module.exports = function(deployer) {
-    deployer.deploy(GimmerCrowdSale, // give the address of the crowd sale
-        a(30),
-        [13158496, 13980902, 14803308, 15625714, 16448122], // GMR token prices
-        [a(1400), a(2880), a(4320), a(5760), a(7200)], // GMR token dates, in Unix time
-        5 * Math.pow(10, 18), // maximum amount of Wei the person can spend without KYC        
-        0x204d8e205bedc8e12bfc158cba6583966117e3c5, // frozen wallet address
-        11263626 // pre sale bonus price
-    ); 
+    // deployer.deploy(GimmerCrowdSale, // give the address of the crowd sale
+    //     a(30),
+    //     [13158496, 13980902, 14803308, 15625714, 16448122], // GMR token prices
+    //     [a(1400), a(2880), a(4320), a(5760), a(7200)], // GMR token dates, in Unix time
+    //     5 * Math.pow(10, 18), // maximum amount of Wei the person can spend without KYC        
+    //     0x204d8e205bedc8e12bfc158cba6583966117e3c5, // frozen wallet address
+    //     11263626 // pre sale bonus price
+    // ); 
 
-    deployer.deploy(GimmerPreSale, // give the address of the crowd sale
-        a(30), // start date
-        a(1440), // end date
-        13158496, // default preale price
-        11263626 // bonus price
-    ); 
+    // deployer.deploy(GimmerPreSale, // give the address of the crowd sale
+    //     1511524800, // start date
+    //     1514894400, // end date
+    //     13158496, // default preale price
+    //     11263626, // bonus price
+    //     0x6c9e345b09ac4842a4fab60fa68c386e2b11540b // KYC manager wallet
+    // ); 
 };

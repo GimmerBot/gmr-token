@@ -1,6 +1,7 @@
 pragma solidity ^0.4.17;
 
 import '../submodules/zeppelin-solidity/contracts/math/SafeMath.sol';
+//import '../submodules/zeppelin-solidity/contracts/ownership/Ownable.sol';
 import '../submodules/zeppelin-solidity/contracts/lifecycle/Pausable.sol';
 
 /**
@@ -63,13 +64,14 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     uint256 public weiRaised;
 
     // Maximum amount that can be sold during the Pre Sale period
-    uint256 public constant PRE_SALE_TOKEN_CAP = 10000 * 10**8;//15 * 10**6 * 10**8;
+    uint256 public constant PRE_SALE_TOKEN_CAP = 15 * 10**6 * 10**8;
 
     // The minimum amount needed to receive in Wei to change the price to preSaleBonusPrice
     uint256 public constant PRE_SALE_BONUS_WEI_MIN = 3000 * 10**18;
 
     // The minimum allowed transaction in wei on the presale
-    uint256 public constant PRE_SALE_WEI_MIN_TRANSACTION = 300 * 10**18;
+    uint256 public constant PRE_SALE_WEI_MIN_TRANSACTION = 1 * 10**18;
+    
 
     /**
     * event for token purchase logging
@@ -86,22 +88,23 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     /**
     * @dev 
     */
-    function GimmerPreSale(uint256 _startTime, uint256 _endTime, uint256 _price, uint256 _bonusPrice) {
+    function GimmerPreSale(uint256 _startTime, uint256 _endTime, uint256 _price, uint256 _bonusPrice, address _kycManagerWallet) {
         require(_startTime >= now);
         require(_endTime >= _startTime);
         require(_price > 0);
         require(_bonusPrice > 0);
+        require(_kycManagerWallet != address(0));
 
         startTime = _startTime;
         endTime = _endTime;
         price = _price;
         bonusPrice = _bonusPrice;
         wallet = msg.sender;
-        kycManager = msg.sender;
+        kycManager = _kycManagerWallet;
     }
 
     // fallback function can be used to buy tokens
-    function () whenNotPaused public payable {
+    function () public payable {
         buyTokens(msg.sender);
     }
 
@@ -109,9 +112,9 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     * @dev Buys tokens and sends them to a specific address
     * @param beneficiary The address that will receive the GMR tokens
     */
-    function buyTokens(address beneficiary) public payable {
+    function buyTokens(address beneficiary) whenNotPaused public payable {
         require(beneficiary != address(0));
-        require(msg.value != 0);
+        require(msg.value >= PRE_SALE_WEI_MIN_TRANSACTION);
         require(now >= startTime && now <= endTime);
 
         Supporter storage sup = supportersMap[beneficiary];
@@ -128,6 +131,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
         }
         
         uint256 tokens = weiAmount.div(currentTokenPrice);
+
         uint256 totalTokensSold = tokensSold.add(tokens);
         require(totalTokensSold <= PRE_SALE_TOKEN_CAP);
 
@@ -158,11 +162,11 @@ contract GimmerPreSale is ERC20Basic, Pausable {
 
     /**
     * @dev Changes the KYC manager to a new address
-    * @param _newKYCManager The new address that will be managing KYC approval
+    * @param newKYCManager The new address that will be managing KYC approval
     */
     function setKYCManager(address newKYCManager) public onlyOwner {
-        require(_newKYCManager != address(0));
-        kycManager = _newKYCManager;
+        require(newKYCManager != address(0));
+        kycManager = newKYCManager;
     }
 
     /**
@@ -171,14 +175,6 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     */
     function userHasKYC(address user) public constant returns (bool) {
         return supportersMap[user].hasKYC;
-    }
-
-    /**
-    * @dev Returns the address of the account that is able to flag supporters' KYC
-    * @return an address representing the account that manages KYC approval
-    */
-    function getKYCManager() public constant returns (address) {
-        return kycManager;
     }
 
     /**
