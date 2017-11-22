@@ -31,6 +31,7 @@ module.exports = function(deployer) {
     //     1514894400, // end date
     //     13158496, // default preale price
     //     11263626, // bonus price
+    //      0x204d8e205bedc8e12bfc158cba6583966117e3c5,
     //     0x6c9e345b09ac4842a4fab60fa68c386e2b11540b // KYC manager wallet
     // ); 
 };

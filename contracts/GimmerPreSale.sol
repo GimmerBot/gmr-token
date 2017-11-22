@@ -52,7 +52,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     uint256 public price;
     uint256 public bonusPrice;
 
-    address public wallet;
+    address public fundWallet;
 
     // Address that manages approval of KYC
     address public kycManager;
@@ -88,7 +88,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     /**
     * @dev 
     */
-    function GimmerPreSale(uint256 _startTime, uint256 _endTime, uint256 _price, uint256 _bonusPrice, address _kycManagerWallet) {
+    function GimmerPreSale(uint256 _startTime, uint256 _endTime, uint256 _price, uint256 _bonusPrice, address _fundWallet, address _kycManagerWallet) {
         require(_startTime >= now);
         require(_endTime >= _startTime);
         require(_price > 0);
@@ -99,7 +99,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
         endTime = _endTime;
         price = _price;
         bonusPrice = _bonusPrice;
-        wallet = msg.sender;
+        fundWallet = _fundWallet;
         kycManager = _kycManagerWallet;
     }
 
@@ -145,7 +145,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
         mint(beneficiary, tokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
-        wallet.transfer(msg.value);
+        fundWallet.transfer(msg.value);
     }
 
     /**
