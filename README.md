@@ -2,7 +2,6 @@
 
 All the Gimmer Solidity contracts will be stored in this repository.
 
-
 ## Getting Started
 
 These instructions will get you a copy of the project ready for testing or deployment on your local machine.

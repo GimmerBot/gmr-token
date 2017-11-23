@@ -64,7 +64,7 @@
 
 \section {Gimmer Pre Sale}
 
-The Gimmer Pre Sale contract is basically a crowdsale and token contract used as a proxy during the presale for the closed sale before opening to the full public.
+The Gimmer Pre Sale contract is basically a crowdsale and token contract used as a proxy during the presale for the closed sale before opening to the full public.\\
 
 \subsection{Constructor}
 \subsubsection{Start Time}
@@ -79,6 +79,11 @@ Price for transactions below 3000 ETH (see Variables - Price).
 \subsubsection{Bonus Price}
 Price for transactions above 3000 ETH (see Variables - Bonus Price).
 
+\subsubsection{Fund Wallet}
+The wallet that the contract will forward the received Wei to (see Variables - Fund Wallet).
+
+\subsubsection{KYC Manager Wallet}
+The wallet that will start as the KYC Manager wallet (see Variables - KYC Manager Wallet).
 
 \subsection{Variables}
 
@@ -103,11 +108,13 @@ The price to use for transactions that go above the Pre Sale Bonus Min (3000 ETH
 \subsubsection{Wallet}
 The wallet that the Wei funds will be forwarded to
 
-\subsubsection{KYC Manager}
+\subsubsection{KYC Manager Wallet}
 The wallet that is able to approve the KYC of supporters. 
 Can be changed by the owner of the contract by calling setKYCManager.
 
 \subsubsection{Tokens Sold}
+The total amount of tokens sold through the Pre Sale contract.
+
 \subsubsection{WEI Raised}
 
 \subsection{Constants}
@@ -115,10 +122,6 @@ Can be changed by the owner of the contract by calling setKYCManager.
 \item Pre Sale Token Cap: 15,000,000.00000000 GMR
 \item Pre Sale Bonus Wei Min: 3,000 ETH
 \item Pre Sale Wei Min Transaction: 300 ETH (never really used)
-\end{itemize}
-
-\begin{itemize}
-\item Test
 \end{itemize}
 
 \subsection{Parameters}
@@ -146,9 +149,6 @@ Public
 \subsubsection{userHasKYC(address user)}
 Public Constant
 
-\subsubsection{getKYCManager(r)}
-Public Constant
-
 \subsubsection{mint(address to, uint256 amount)}
 Internal
 
@@ -165,9 +165,8 @@ Pricing
 \begin{itemize}
     \item 1 ETH = 780 GMR
     \item 300 ETH = 234000.01497600 GMR (30\% bonus)
-    \item 3000 ETH = 2520000.19152001 GMR (40\% bonus)
+    \item 3001 ETH = 2520840.19158385 GMR (40\% bonus)
 \end{itemize}
-
 
 \subsubsection{KYC}
 \begin{itemize}
@@ -179,9 +178,10 @@ Pricing
 
 \section{Gimmer Token}
 
-Gimmer Token is the contract for the GMR Tokens in the Gimmer ecosystem.
-It's a Mintable Token, meaning the Crowdsale actually creates the tokens before each sale.
-The token also inherits the Pausable lifecycle contract, as it starts paused - so no trading can occur before the crowd sale is over and the token is unpaused.
+Gimmer Token is the contract for the GMR Tokens in the Gimmer ecosystem.\\
+It's a Mintable Token, meaning the Crowdsale actually creates the tokens before each sale.\\
+The token also inherits the Pausable lifecycle contract, as it starts paused - so no trading can occur before the crowd sale is over and the token is unpaused.\\
+
 
 \subsection{Parameters}
 
