@@ -15,7 +15,7 @@ contract ERC20Basic {
     function balanceOf(address _owner) public constant returns (uint256) { 
         return balances[_owner]; 
     }
-    //Transfer is disabled
+    // Transfer is disabled for users
     //function transfer(address to, uint256 value) public returns (bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
@@ -43,14 +43,14 @@ contract GimmerPreSale is ERC20Basic, Pausable {
 
     string public constant name = "GimmerPreSale";
     string public constant symbol = "GMRP";
-    uint256 public constant decimals = 8;
+    uint256 public constant decimals = 18;
 
     // start and end timestamps where investments are allowed (both inclusive)
     uint256 public startTime;
     uint256 public endTime;
 
-    uint256 public price;
-    uint256 public bonusPrice;
+    uint256 public baseRate;
+    uint256 public bonusRate;
 
     address public fundWallet;
 
@@ -64,7 +64,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     uint256 public weiRaised;
 
     // Maximum amount that can be sold during the Pre Sale period
-    uint256 public constant PRE_SALE_TOKEN_CAP = 15 * 10**6 * 10**8;
+    uint256 public constant PRE_SALE_TOKEN_CAP = 15 * 10**6 * 10**18;
 
     // The minimum amount needed to receive in Wei to change the price to preSaleBonusPrice
     uint256 public constant PRE_SALE_BONUS_WEI_MIN = 3000 * 10**18;
@@ -88,17 +88,18 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     /**
     * @dev 
     */
-    function GimmerPreSale(uint256 _startTime, uint256 _endTime, uint256 _price, uint256 _bonusPrice, address _fundWallet, address _kycManagerWallet) {
+    function GimmerPreSale(uint256 _startTime, uint256 _endTime, uint256 _baseRate, uint256 _bonusRate, address _fundWallet, address _kycManagerWallet) {
         require(_startTime >= now);
         require(_endTime >= _startTime);
-        require(_price > 0);
-        require(_bonusPrice > 0);
+        require(_baseRate > 0);
+        require(_bonusRate > 0);
+        require(_fundWallet != address(0));
         require(_kycManagerWallet != address(0));
 
         startTime = _startTime;
         endTime = _endTime;
-        price = _price;
-        bonusPrice = _bonusPrice;
+        baseRate = _baseRate;
+        bonusRate = _bonusRate;
         fundWallet = _fundWallet;
         kycManager = _kycManagerWallet;
     }
@@ -108,44 +109,60 @@ contract GimmerPreSale is ERC20Basic, Pausable {
         buyTokens(msg.sender);
     }
 
-    /**
-    * @dev Buys tokens and sends them to a specific address
-    * @param beneficiary The address that will receive the GMR tokens
-    */
+    // @return true if the transaction can buy tokens
+    function validPurchase() internal constant returns (bool) {
+        bool withinPeriod = now >= startTime && now <= endTime;
+        bool higherThanMin = msg.value >= PRE_SALE_WEI_MIN_TRANSACTION;
+        return withinPeriod && higherThanMin;
+    }
+
+    // low level token purchase function
     function buyTokens(address beneficiary) whenNotPaused public payable {
         require(beneficiary != address(0));
-        require(msg.value >= PRE_SALE_WEI_MIN_TRANSACTION);
-        require(now >= startTime && now <= endTime);
+        require(validPurchase());
 
+        // make sure the user buying tokens has KYC
         Supporter storage sup = supportersMap[beneficiary];
         require(sup.hasKYC);
 
-        uint256 weiAmount = msg.value;
-        
-        uint256 currentTokenPrice;
         // calculate token amount to be created
-        if (weiAmount > PRE_SALE_BONUS_WEI_MIN) {
-            currentTokenPrice = bonusPrice;
-        } else {
-            currentTokenPrice = price;
-        }
-        
-        uint256 tokens = weiAmount.div(currentTokenPrice);
+        uint256 weiAmount = msg.value;
+        uint256 rate = getRate(weiAmount);
+        uint256 tokens = weiAmount.mul(rate);
 
+        // look if we have not yet reached the cap
         uint256 totalTokensSold = tokensSold.add(tokens);
         require(totalTokensSold <= PRE_SALE_TOKEN_CAP);
 
+        // update supporter state
         uint256 totalWei = sup.weiSpent.add(weiAmount);
         sup.weiSpent = totalWei;
 
-        // update state
+        // update contract state
         weiRaised = weiRaised.add(weiAmount);
         tokensSold = totalTokensSold;
 
+        // finally mint the coins
         mint(beneficiary, tokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
+        // and forward the funds to the
+        forwardFunds();
+    }
+
+    function getRate(uint256 weiAmount) constant returns (uint256) {
+        return weiAmount > PRE_SALE_BONUS_WEI_MIN ? bonusRate : baseRate;
+    }
+
+    // send ether to the fund collection wallet
+    // override to create custom fund forwarding mechanisms
+    function forwardFunds() internal {
         fundWallet.transfer(msg.value);
+    }
+
+    // @return true if crowdsale event has ended
+    function hasEnded() public constant returns (bool) {
+        return now > endTime;
     }
 
     /**
