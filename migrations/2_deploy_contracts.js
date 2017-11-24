@@ -26,12 +26,12 @@ module.exports = function(deployer) {
     //     11263626 // pre sale bonus price
     // ); 
 
-    deployer.deploy(GimmerPreSale, // give the address of the crowd sale
-        a(2),//1511524800, // start date
-        a(20),//1514894400, // end date
-        "12820512", // default preale price
-        "11904761", // bonus price
-        "0x204d8e205bedc8e12bfc158cba6583966117e3c5",// WEI holder
-        "0x6c9e345b09ac4842a4fab60fa68c386e2b11540b" // KYC manager wallet
-    ); 
+    // deployer.deploy(GimmerPreSale, // give the address of the crowd sale
+    //     a(2),//1511524800, // start date
+    //     a(20),//1514894400, // end date
+    //     "1300", // default presale rate
+    //     "1400", // bonus presale rate
+    //     "0x204d8e205bedc8e12bfc158cba6583966117e3c5",// WEI holder
+    //     "0x6c9e345b09ac4842a4fab60fa68c386e2b11540b" // KYC manager wallet
+    // ); 
 };
