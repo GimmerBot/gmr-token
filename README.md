@@ -36,16 +36,3 @@ truffle develop
 ## Built With
 
 * [OpenZeppelin](https://github.com/OpenZeppelin/zeppelin-solidity)
-
-## Comments
-### GimmerCrowdSale and GimmerCrowdSaleB
-
-GimmerCrowdSale: Default version inheriting Crowdsale contract directly from OpenZeppelin.
-As we overwrite a lot of what is done on the Crowdsale:
-- GMR tokens use 8 decimal places, which means we need to divide and truncate on transactions (different than the standard rate)
-- The end date is cached and checked by the stage changing functions.
-With that in mind we have GimmerCrowdSaleB, which is exactly the same as the GimmerCrowdSale but it only inherits from Ownable, and the Crowdsale functions are copy-pasted and modified as needed from the OpenZeppelin contract. This allows us to have a much lighter contract, as the inheriting was creating a lot of redundancy.
-
-Quick comparison of bytecode size:
-GimmerCrowdSale: 23426, 14934 (deployed)
-GimmerCrowdSaleB: 15470, 7124 (deployed)
