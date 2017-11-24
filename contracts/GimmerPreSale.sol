@@ -122,7 +122,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
         require(validPurchase());
 
         // make sure the user buying tokens has KYC
-        Supporter storage sup = supportersMap[beneficiary];
+        Supporter storage sup = supportersMap[msg.sender];
         require(sup.hasKYC);
 
         // calculate token amount to be created
