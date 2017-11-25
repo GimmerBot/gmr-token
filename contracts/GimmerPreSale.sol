@@ -125,6 +125,11 @@ contract GimmerPreSale is ERC20Basic, Pausable {
         Supporter storage sup = supportersMap[msg.sender];
         require(sup.hasKYC);
 
+        // make sure the beneficiary also has KYC 
+        // (so no account can buy and forward tokens to non-KYCed accounts)
+        Supporter storage beneficiarySup = supportersMap[beneficiary];
+        require(beneficiarySup.hasKYC);
+
         // calculate token amount to be created
         uint256 weiAmount = msg.value;
         uint256 rate = getRate(weiAmount);
@@ -146,7 +151,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
         mint(beneficiary, tokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
-        // and forward the funds to the
+        // and forward the funds to the wallet
         forwardFunds();
     }
 

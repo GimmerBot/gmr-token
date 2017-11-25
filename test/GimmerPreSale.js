@@ -417,6 +417,13 @@ contract ('GimmerPreSale', async function (caccounts) {
             assert.equal(userHasKyc, true, "KYC has not been flagged");
         });
 
+        it('Should approve KYC of the investors account', async function () {
+            const crowdSale = this.crowdsale;
+            await crowdSale.approveUserKYC(investor, {from:kycManagerAcc});
+            const userHasKyc = await crowdSale.userHasKYC(investor);
+            assert.equal(userHasKyc, true, "KYC has not been flagged");
+        });
+
         it('Should reject payments before start', async function () {
             await this.crowdsale.sendTransaction({value, from: purchaser}).should.be.rejectedWith(EVMThrow);
             await this.crowdsale.buyTokens(investor, {from: purchaser, value: value}).should.be.rejectedWith(EVMThrow);
@@ -505,6 +512,13 @@ contract ('GimmerPreSale', async function (caccounts) {
             const crowdSale = this.crowdsale;
             await crowdSale.approveUserKYC(purchaser, {from:kycManagerAcc});
             const userHasKyc = await crowdSale.userHasKYC(purchaser);
+            assert.equal(userHasKyc, true, "KYC has not been flagged");
+        });
+
+        it('Should approve KYC of the investors account', async function () {
+            const crowdSale = this.crowdsale;
+            await crowdSale.approveUserKYC(investor, {from:kycManagerAcc});
+            const userHasKyc = await crowdSale.userHasKYC(investor);
             assert.equal(userHasKyc, true, "KYC has not been flagged");
         });
 
