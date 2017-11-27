@@ -41,17 +41,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     // Mapping with all the campaign supporters
     mapping(address => Supporter) public supportersMap;
 
-    string public constant name = "GimmerPreSale";
-    string public constant symbol = "GMRP";
-    uint256 public constant decimals = 18;
-
-    // start and end timestamps where investments are allowed (both inclusive)
-    uint256 public startTime;
-    uint256 public endTime;
-
-    uint256 public baseRate;
-    uint256 public bonusRate;
-
+    // Address to forward all Wei to
     address public fundWallet;
 
     // Address that manages approval of KYC
@@ -64,71 +54,84 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     uint256 public weiRaised;
 
     // Maximum amount that can be sold during the Pre Sale period
-    uint256 public constant PRE_SALE_TOKEN_CAP = 15 * 10**6 * 10**18;
-
-    // The minimum amount needed to receive in Wei to change the price to preSaleBonusPrice
-    uint256 public constant PRE_SALE_BONUS_WEI_MIN = 3000 * 10**18;
+    uint256 public constant PRE_SALE_TOKEN_CAP = 15000000 ether;
 
     // The minimum allowed transaction in wei on the presale
-    uint256 public constant PRE_SALE_WEI_MIN_TRANSACTION = 1 * 10**18;
-    
+    uint256 public constant PRE_SALE_WEI_MIN_TRANSACTION = 30 ether;
+
+    // The minimum amount needed to receive in Wei to change the price to preSaleBonusPrice
+    uint256 public constant PRE_SALE_BONUS_1_WEI_MIN = 3000 ether;
+
+    // The minimum amount needed to receive in Wei to change the price to preSaleBonusPrice
+    uint256 public constant PRE_SALE_BONUS_2_WEI_MIN = 300 ether;
+
+    // The price for people that buy more than PRE_SALE_BONUS_1_WEI_MIN (Band 1)
+    uint256 public constant TOKEN_RATE_BAND_1 = 1400;
+
+    // The price for people that buy more than PRE_SALE_BONUS_1_WEI_MIN (Band 2)
+    uint256 public constant TOKEN_RATE_BAND_2 = 1300;
+
+    // The price for people that buy less than both bonus (Band 3)
+    uint256 public constant TOKEN_RATE_BAND_3 = 1250;
+
+    // start and end timestamps where investments are allowed (both inclusive)
+    uint256 public constant START_TIME = 1511524800;
+    uint256 public constant END_TIME = 1514894400;
+
+    // The name of the Token
+    string public constant name = "GimmerPreSale Token";
+
+    // The symbol to be shown as the token
+    string public constant symbol = "GMRP";
+
+    // The amount of decimals the GMRP token has
+    uint256 public constant decimals = 18;
 
     /**
     * event for token purchase logging
-    * @param purchaser who paid for the tokens
-    * @param beneficiary who got the tokens
+    * @param purchaser who bought the tokens
     * @param value weis paid for purchase
     * @param amount amount of tokens purchased
     */
-    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event TokenPurchase(address indexed purchaser, uint256 value, uint256 amount);
 
-
+    /**
+    * event for minting new tokens
+    * @param to the person that 
+    */
     event Mint(address indexed to, uint256 amount);
 
     /**
     * @dev 
     */
-    function GimmerPreSale(uint256 _startTime, uint256 _endTime, uint256 _baseRate, uint256 _bonusRate, address _fundWallet, address _kycManagerWallet) {
-        require(_startTime >= now);
-        require(_endTime >= _startTime);
-        require(_baseRate > 0);
-        require(_bonusRate > 0);
+    function GimmerPreSale(address _fundWallet, address _kycManagerWallet) {
         require(_fundWallet != address(0));
         require(_kycManagerWallet != address(0));
 
-        startTime = _startTime;
-        endTime = _endTime;
-        baseRate = _baseRate;
-        bonusRate = _bonusRate;
         fundWallet = _fundWallet;
         kycManager = _kycManagerWallet;
     }
 
     // fallback function can be used to buy tokens
     function () public payable {
-        buyTokens(msg.sender);
+        buyTokens();
     }
 
     // @return true if the transaction can buy tokens
     function validPurchase() internal constant returns (bool) {
-        bool withinPeriod = now >= startTime && now <= endTime;
+        bool withinPeriod = now >= START_TIME && now <= END_TIME;
         bool higherThanMin = msg.value >= PRE_SALE_WEI_MIN_TRANSACTION;
         return withinPeriod && higherThanMin;
     }
 
     // low level token purchase function
-    function buyTokens(address beneficiary) whenNotPaused public payable {
-        require(beneficiary != address(0));
+    function buyTokens() whenNotPaused public payable {
         require(validPurchase());
 
         // make sure the user buying tokens has KYC
-        Supporter storage sup = supportersMap[msg.sender];
+        address sender = msg.sender;
+        Supporter storage sup = supportersMap[sender];
         require(sup.hasKYC);
-
-        // make sure the beneficiary also has KYC 
-        // (so no account can buy and forward tokens to non-KYCed accounts)
-        Supporter storage beneficiarySup = supportersMap[beneficiary];
-        require(beneficiarySup.hasKYC);
 
         // calculate token amount to be created
         uint256 weiAmount = msg.value;
@@ -148,15 +151,21 @@ contract GimmerPreSale is ERC20Basic, Pausable {
         tokensSold = totalTokensSold;
 
         // finally mint the coins
-        mint(beneficiary, tokens);
-        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+        mint(sender, tokens);
+        TokenPurchase(sender, weiAmount, tokens);
 
         // and forward the funds to the wallet
         forwardFunds();
     }
 
+    // returns the rate the user will be paying at,
+    // based on the amount of wei sent to the contract
     function getRate(uint256 weiAmount) constant returns (uint256) {
-        return weiAmount > PRE_SALE_BONUS_WEI_MIN ? bonusRate : baseRate;
+        if (weiAmount > PRE_SALE_BONUS_1_WEI_MIN)
+        {
+            return TOKEN_RATE_BAND_1;
+        }
+        return weiAmount > PRE_SALE_BONUS_2_WEI_MIN ? TOKEN_RATE_BAND_2 : TOKEN_RATE_BAND_3;
     }
 
     // send ether to the fund collection wallet
@@ -167,7 +176,15 @@ contract GimmerPreSale is ERC20Basic, Pausable {
 
     // @return true if crowdsale event has ended
     function hasEnded() public constant returns (bool) {
-        return now > endTime;
+        return now > END_TIME;
+    }
+
+    /**
+    * @dev Throws if called by any account other than the KYC Manager.
+    */
+    modifier onlyKycManager() {
+        require(msg.sender == kycManager);
+        _;
     }
 
     /**
@@ -175,9 +192,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     * to be withdrawn
     * @param user The user to flag as known
     */
-    function approveUserKYC(address user) public {
-        require(msg.sender == kycManager);
-
+    function approveUserKYC(address user) onlyKycManager public {
         Supporter storage sup = supportersMap[user];
         sup.hasKYC = true;
     }
@@ -186,7 +201,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     * @dev Changes the KYC manager to a new address
     * @param newKYCManager The new address that will be managing KYC approval
     */
-    function setKYCManager(address newKYCManager) public onlyOwner {
+    function setKYCManager(address newKYCManager) onlyOwner public {
         require(newKYCManager != address(0));
         kycManager = newKYCManager;
     }
