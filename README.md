@@ -18,6 +18,7 @@ To make sure you have your copy, after cloning run:
 ```
 git submodule update --init --recursive  // first time only
 git submodule update --recursive --remote // for updating the subrepo later
+npm install
 ```
 
 ## Compiling
