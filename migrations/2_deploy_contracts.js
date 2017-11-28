@@ -26,12 +26,19 @@ module.exports = function(deployer) {
     //     11263626 // pre sale bonus price
     // ); 
 
-    // deployer.deploy(GimmerPreSale, // give the address of the crowd sale
-    //     a(2),//1511524800, // start date
-    //     a(20),//1514894400, // end date
-    //     "1300", // default presale rate
-    //     "1400", // bonus presale rate
+    // deployer.deploy(GimmerPreSale, // give the address of the crowd saleddd
     //     "0x204d8e205bedc8e12bfc158cba6583966117e3c5",// WEI holder
     //     "0x6c9e345b09ac4842a4fab60fa68c386e2b11540b" // KYC manager wallet
-    // ); 
+    // );//rinkeby accounts
+
+    deployer.deploy(GimmerPreSale, // give the address of the crowd saleddd
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57",// WEI holder
+        "0xf17f52151ebef6c7334fad080c5704d77216b732" // KYC manager wallet
+    );//ganache cli
+
+    // deployer.deploy(GimmerPreSale, // give the address of the crowd saleddd
+    //     "0xc5fdf4076b8f3a5357c5e395ab970b5b54098fef", // WEI holder
+    //     "0x821aea9a577a9b44299b9c15c88cf3087f3b5544" // KYC manager wallet
+    // );//truffle test network
+    
 };

@@ -161,11 +161,11 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     // returns the rate the user will be paying at,
     // based on the amount of wei sent to the contract
     function getRate(uint256 weiAmount) constant returns (uint256) {
-        if (weiAmount > PRE_SALE_BONUS_1_WEI_MIN)
+        if (weiAmount >= PRE_SALE_BONUS_1_WEI_MIN)
         {
             return TOKEN_RATE_BAND_1;
         }
-        return weiAmount > PRE_SALE_BONUS_2_WEI_MIN ? TOKEN_RATE_BAND_2 : TOKEN_RATE_BAND_3;
+        return weiAmount >= PRE_SALE_BONUS_2_WEI_MIN ? TOKEN_RATE_BAND_2 : TOKEN_RATE_BAND_3;
     }
 
     // send ether to the fund collection wallet
