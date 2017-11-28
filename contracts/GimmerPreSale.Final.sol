@@ -1,7 +1,6 @@
 pragma solidity ^0.4.17;
 
 import '../submodules/zeppelin-solidity/contracts/math/SafeMath.sol';
-//import '../submodules/zeppelin-solidity/contracts/ownership/Ownable.sol';
 import '../submodules/zeppelin-solidity/contracts/lifecycle/Pausable.sol';
 
 /**
@@ -12,9 +11,7 @@ import '../submodules/zeppelin-solidity/contracts/lifecycle/Pausable.sol';
 contract ERC20Basic {
     uint256 public totalSupply;
     mapping(address => uint256) balances;
-    function balanceOf(address _owner) public constant returns (uint256) { 
-        return balances[_owner]; 
-    }
+    function balanceOf(address _owner) public constant returns (uint256) { return balances[_owner]; }
     // Transfer is disabled for users
     //function transfer(address to, uint256 value) public returns (bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -32,26 +29,17 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     * how much the user has bought so far, and if he's flagged as known
     */
     struct Supporter {
-        // the total amount of Wei this address has sent to this contract
-        uint256 weiSpent;
-        // if the user has KYC flagged
-        bool hasKYC;
+        uint256 weiSpent;   // the total amount of Wei this address has sent to this contract
+        bool hasKYC;        // if the user has KYC flagged
     }
 
     // Mapping with all the campaign supporters
     mapping(address => Supporter) public supportersMap;
 
-    // Address to forward all Wei to
-    address public fundWallet;
-
-    // Address that manages approval of KYC
-    address public kycManager;
-
-    // How many sold in PreSale
-    uint256 public tokensSold;
-
-    // amount of raised money in wei
-    uint256 public weiRaised;
+    address public fundWallet;      // Address to forward all Wei to
+    address public kycManager;      // Address that manages approval of KYC
+    uint256 public tokensSold;      // How many sold in PreSale
+    uint256 public weiRaised;       // amount of raised money in wei
 
     // Maximum amount that can be sold during the Pre Sale period
     uint256 public constant PRE_SALE_TOKEN_CAP = 15000000 ether;
@@ -78,13 +66,8 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     uint256 public constant START_TIME = 1511524800;
     uint256 public constant END_TIME = 1514894400;
 
-    // The name of the Token
     string public constant name = "GimmerPreSale Token";
-
-    // The symbol to be shown as the token
     string public constant symbol = "GMRP";
-
-    // The amount of decimals the GMRP token has
     uint256 public constant decimals = 18;
 
     /**
