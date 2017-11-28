@@ -104,7 +104,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     /**
     * @dev 
     */
-    function GimmerPreSale(address _fundWallet, address _kycManagerWallet) {
+    function GimmerPreSale(address _fundWallet, address _kycManagerWallet) public {
         require(_fundWallet != address(0));
         require(_kycManagerWallet != address(0));
 
@@ -160,7 +160,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
 
     // returns the rate the user will be paying at,
     // based on the amount of wei sent to the contract
-    function getRate(uint256 weiAmount) constant returns (uint256) {
+    function getRate(uint256 weiAmount) public pure returns (uint256) {
         if (weiAmount >= PRE_SALE_BONUS_1_WEI_MIN)
         {
             return TOKEN_RATE_BAND_1;
