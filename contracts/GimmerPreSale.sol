@@ -75,8 +75,12 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     uint256 public constant TOKEN_RATE_BAND_3 = 1250;
 
     // start and end timestamps where investments are allowed (both inclusive)
-    uint256 public constant START_TIME = 1511524800;
-    uint256 public constant END_TIME = 1514894400;
+    // uint256 public constant START_TIME = 1511524800;
+    // uint256 public constant END_TIME = 1514894400;
+
+    // start and end dates should be constnat in the final version
+    uint256 public START_TIME = 1511524800;
+    uint256 public END_TIME = 1514894400;
 
     // The name of the Token
     string public constant name = "GimmerPreSale Token";
@@ -115,6 +119,12 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     // fallback function can be used to buy tokens
     function () public payable {
         buyTokens();
+    }
+
+    // This function is to be commented on the final version, this is for testing
+    function testSetDates(uint256 startDate, uint256 endDate){
+        START_TIME = startDate;
+        END_TIME = endDate;
     }
 
     // @return true if the transaction can buy tokens

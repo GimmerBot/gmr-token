@@ -111,11 +111,13 @@ contract ('GimmerPreSale', async function (caccounts) {
             // this.endTime = 1514894400;// this.startTime + duration.weeks(1);
             // this.afterEndTime = this.endTime + duration.weeks(1);
             this.startTime = latestTime() + duration.weeks(1);
-            this.endTime =   this.startTime + duration.weeks(1);
+            this.endTime = this.startTime + duration.weeks(1);
             this.afterEndTime = this.endTime + duration.seconds(1);
         
             this.crowdsale = await GimmerPreSale.new(fundWalletAcc, kycManagerAcc);
             this.totalBought = new BigNumber(0);
+
+            await this.crowdsale.testSetDates(this.startTime, this.endTime);
 
             await increaseTimeTo(this.startTime);
             await advanceBlock();
@@ -209,13 +211,14 @@ contract ('GimmerPreSale', async function (caccounts) {
 
     describe('1 Person Buys All', function(){
         it('Should deploy the contract and wait till the campaign starts', async function () {
-            this.startTime = latestTime() + duration.weeks(1);
+            this.startTime = latestTime() + duration.years(1);
             this.endTime =   this.startTime + duration.weeks(1);
             this.afterEndTime = this.endTime + duration.seconds(1);
         
             this.crowdsale = await GimmerPreSale.new(fundWalletAcc, kycManagerAcc);
             this.totalBought = new BigNumber(0);
-
+            await this.crowdsale.testSetDates(this.startTime, this.endTime);
+            
             await increaseTimeTo(this.startTime);
             await advanceBlock();
         });
@@ -265,13 +268,14 @@ contract ('GimmerPreSale', async function (caccounts) {
 
     describe('3 Investors', function(){
         it('Should deploy the contract and wait till the campaign starts', async function () {
-            this.startTime = latestTime() + duration.weeks(1);
+            this.startTime = latestTime() + duration.years(1);
             this.endTime =   this.startTime + duration.weeks(1);
             this.afterEndTime = this.endTime + duration.seconds(1);
         
             this.crowdsale = await GimmerPreSale.new(fundWalletAcc, kycManagerAcc);
             this.totalBought = new BigNumber(0);
-
+            await this.crowdsale.testSetDates(this.startTime, this.endTime);
+            
             await increaseTimeTo(this.startTime);
             await advanceBlock();
         });
@@ -339,13 +343,14 @@ contract ('GimmerPreSale', async function (caccounts) {
 
     describe('Pause Test', function(){
         it('Should deploy the contract and wait till the campaign starts', async function () {
-            this.startTime = latestTime() + duration.weeks(1);
+            this.startTime = latestTime() + duration.years(1);
             this.endTime =   this.startTime + duration.weeks(1);
             this.afterEndTime = this.endTime + duration.seconds(1);
         
             this.crowdsale = await GimmerPreSale.new(fundWalletAcc, kycManagerAcc);
             this.totalBought = new BigNumber(0);
-
+            await this.crowdsale.testSetDates(this.startTime, this.endTime);
+            
             await increaseTimeTo(this.startTime);
             await advanceBlock();
         });
@@ -425,13 +430,14 @@ contract ('GimmerPreSale', async function (caccounts) {
 
     describe('Accepting payments', function () {
         it('Should deploy the contract', async function () {
-            this.startTime = latestTime() + duration.weeks(1);
+            this.startTime = latestTime() + duration.years(1);
             this.endTime = this.startTime + duration.weeks(1);
             this.afterEndTime = this.endTime + duration.seconds(1);
         
             this.crowdsale = await GimmerPreSale.new(fundWalletAcc, kycManagerAcc);
             this.totalBought = new BigNumber(0);
-
+            await this.crowdsale.testSetDates(this.startTime, this.endTime);
+            
             await advanceBlock();
         });
 
@@ -469,13 +475,14 @@ contract ('GimmerPreSale', async function (caccounts) {
 
     describe('High-Level Purchase', function () {
         it('Should deploy the contract', async function () {
-            this.startTime = latestTime() + duration.weeks(1);
+            this.startTime = latestTime() + duration.years(1);
             this.endTime = this.startTime + duration.weeks(1);
             this.afterEndTime = this.endTime + duration.seconds(1);
         
             this.crowdsale = await GimmerPreSale.new(fundWalletAcc, kycManagerAcc);
             this.totalBought = new BigNumber(0);
-
+            await this.crowdsale.testSetDates(this.startTime, this.endTime);
+            
             await increaseTimeTo(this.startTime);
             await advanceBlock();
         });
@@ -521,13 +528,14 @@ contract ('GimmerPreSale', async function (caccounts) {
 
     describe('Low-Level Purchase', function () {
         it('Should deploy the contract', async function () {
-            this.startTime = latestTime() + duration.weeks(1);
+            this.startTime = latestTime() + duration.years(1);
             this.endTime = this.startTime + duration.weeks(1);
             this.afterEndTime = this.endTime + duration.seconds(1);
         
             this.crowdsale = await GimmerPreSale.new(fundWalletAcc, kycManagerAcc);
             this.totalBought = new BigNumber(0);
-
+            await this.crowdsale.testSetDates(this.startTime, this.endTime);
+            
             await increaseTimeTo(this.startTime);
             await advanceBlock();
         });
@@ -540,7 +548,7 @@ contract ('GimmerPreSale', async function (caccounts) {
         });
 
         it('Should log purchase', async function () {
-            const {logs} = await this.crowdsale.buyTokens(investor, {value: value, from: purchaser});
+            const {logs} = await this.crowdsale.buyTokens({value: value, from: purchaser});
     
             const event = logs.find(e => e.event === 'TokenPurchase');
     
@@ -558,9 +566,9 @@ contract ('GimmerPreSale', async function (caccounts) {
         });
     
         it('Should assign tokens to beneficiary', async function () {
-            const preBalance = await this.crowdsale.balanceOf(investor);
+            const preBalance = await this.crowdsale.balanceOf(purchaser);
             await this.crowdsale.buyTokens({value: value, from: purchaser});
-            const postBalance = await this.crowdsale.balanceOf(investor);
+            const postBalance = await this.crowdsale.balanceOf(purchaser);
             postBalance.sub(preBalance).should.be.bignumber.equal(expectedTokenAmount);
         });
     
