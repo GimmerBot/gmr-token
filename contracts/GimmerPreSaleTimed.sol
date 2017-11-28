@@ -20,7 +20,7 @@ contract ERC20Basic {
 /**
 * @title Gimmer PreSale Smart Contract
 */
-contract GimmerPreSale is ERC20Basic, Pausable {
+contract GimmerPreSaleTimed is ERC20Basic, Pausable {
     using SafeMath for uint256;
 
     /**
@@ -54,8 +54,10 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     uint256 public constant TOKEN_RATE_40_PERCENT_BONUS = 1400; // 40% Bonus Tokens, when >= 3000 ETH
 
     /* start and end timestamps where investments are allowed (both inclusive) */
-    uint256 public constant START_TIME  = 1511524800;   //GMT: Friday, 24 November 2017 12:00:00
-    uint256 public constant END_TIME    = 1514894400;   //GMT: Tuesday, 2 January  2018 12:00:00
+    //uint256 public constant START_TIME  = 1511524800;   //GMT: Friday, 24 November 2017 12:00:00
+    //uint256 public constant END_TIME    = 1514894400;   //GMT: Tuesday, 2 January  2018 12:00:00
+    uint256 public START_TIME = 1511524800;   //GMT: Friday, 24 November 2017 12:00:00
+    uint256 public END_TIME = 1514894400;   //GMT: Tuesday, 2 January  2018 12:00:00
 
     /* Token metadata */
     string public constant name = "GimmerPreSale Token";
@@ -88,7 +90,7 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     /**
     * @dev 
     */
-    function GimmerPreSale(address _fundWallet, address _kycManagerWallet) public {
+    function GimmerPreSaleTimed(address _fundWallet, address _kycManagerWallet) public {
         require(_fundWallet != address(0));
         require(_kycManagerWallet != address(0));
 
@@ -99,6 +101,12 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     // fallback function can be used to buy tokens
     function () public payable {
         buyTokens();
+    }
+
+    // This function is to be commented on the final version, this is for testing
+    function testSetDates(uint256 startDate, uint256 endDate){
+        START_TIME = startDate;
+        END_TIME = endDate;
     }
 
     // @return true if the transaction can buy tokens
