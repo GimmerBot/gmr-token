@@ -19,6 +19,7 @@ contract ERC20Basic {
 
 /**
 * @title Gimmer PreSale Smart Contract
+* @author lucas@gimmer.net, jitendra@chittoda.com
 */
 contract GimmerPreSaleTimed is ERC20Basic, Pausable {
     using SafeMath for uint256;
@@ -42,7 +43,6 @@ contract GimmerPreSaleTimed is ERC20Basic, Pausable {
     // Maximum amount that can be sold during the Pre Sale period
     uint256 public constant PRE_SALE_GMRP_TOKEN_CAP = 15 * ONE_MILLION * 1 ether; //15 Million GMRP Tokens
 
-
     /* Allowed Contribution in Ether */
     uint256 public constant PRE_SALE_30_ETH     = 30 ether;  // Minimum 30 Ether to get 25% Bonus Tokens
     uint256 public constant PRE_SALE_300_ETH    = 300 ether; // Minimum 300 Ether to get 30% Bonus Tokens
@@ -54,10 +54,16 @@ contract GimmerPreSaleTimed is ERC20Basic, Pausable {
     uint256 public constant TOKEN_RATE_40_PERCENT_BONUS = 1400; // 40% Bonus Tokens, when >= 3000 ETH
 
     /* start and end timestamps where investments are allowed (both inclusive) */
-    //uint256 public constant START_TIME  = 1511524800;   //GMT: Friday, 24 November 2017 12:00:00
-    //uint256 public constant END_TIME    = 1514894400;   //GMT: Tuesday, 2 January  2018 12:00:00
-    uint256 public START_TIME = 1511524800;   //GMT: Friday, 24 November 2017 12:00:00
-    uint256 public END_TIME = 1514894400;   //GMT: Tuesday, 2 January  2018 12:00:00
+    // uint256 public constant START_TIME  = 1511524800;   //GMT: Friday, 24 November 2017 12:00:00
+    // uint256 public constant END_TIME    = 1514894400;   //GMT: Tuesday, 2 January  2018 12:00:00
+    uint256 public START_TIME  = 1511524800;   //GMT: Friday, 24 November 2017 12:00:00
+    uint256 public END_TIME    = 1514894400;   //GMT: Tuesday, 2 January  2018 12:00:00
+
+    // This function is to be commented on the final version, this is for testing
+    function testSetDates(uint256 startDate, uint256 endDate){
+        START_TIME = startDate;
+        END_TIME = endDate;
+    }
 
     /* Token metadata */
     string public constant name = "GimmerPreSale Token";
@@ -65,31 +71,40 @@ contract GimmerPreSaleTimed is ERC20Basic, Pausable {
     uint256 public constant decimals = 18;
 
     /**
-    * @dev Modifier to only allow KYCManager
+    * @dev Modifier to only allow KYCManager to execute the function
     */
     modifier onlyKycManager() {
         require(msg.sender == kycManager);
         _;
     }
 
-
     /**
-    * event for token purchase logging
-    * @param purchaser who bought the tokens
-    * @param value weis paid for purchase
-    * @param amount amount of tokens purchased
+    * Event for token purchase logging
+    * @param purchaser  who bought the tokens
+    * @param value      weis paid for purchase
+    * @param amount     amount of tokens purchased
     */
     event TokenPurchase(address indexed purchaser, uint256 value, uint256 amount);
 
     /**
-    * event for minting new tokens
-    * @param to the person that 
+    * Event for minting new tokens
+    * @param to         The person that received tokens
+    * @param amount     Amount of tokens received
     */
     event Mint(address indexed to, uint256 amount);
 
     /**
-    * @dev 
-    */
+     * Event to log a user is approved or disapproved
+     * @param user          User who has been approved/disapproved
+     * @param isApproved    true : User is approved, false : User is disapproved
+     */
+    event KYC(address indexed user, bool isApproved);
+
+    /**
+     * Constructor
+     * @param _fundWallet           Address to forward all received Ethers to
+     * @param _kycManagerWallet     KYC Manager wallet to approve / disapprove user's KYC
+     */
     function GimmerPreSaleTimed(address _fundWallet, address _kycManagerWallet) public {
         require(_fundWallet != address(0));
         require(_kycManagerWallet != address(0));
@@ -98,70 +113,72 @@ contract GimmerPreSaleTimed is ERC20Basic, Pausable {
         kycManager = _kycManagerWallet;
     }
 
-    // fallback function can be used to buy tokens
-    function () public payable {
+    /* fallback function can be used to buy tokens */
+    function () whenNotPaused public payable {
         buyTokens();
     }
 
-    // This function is to be commented on the final version, this is for testing
-    function testSetDates(uint256 startDate, uint256 endDate){
-        START_TIME = startDate;
-        END_TIME = endDate;
-    }
-
-    // @return true if the transaction can buy tokens
+    /* @return true if the transaction can buy tokens, otherwise false */
     function validPurchase() internal constant returns (bool) {
         bool withinPeriod = now >= START_TIME && now <= END_TIME;
-        bool higherThanMin = msg.value >= PRE_SALE_30_ETH;
-        return withinPeriod && higherThanMin;
+        bool higherThanMin30ETH = msg.value >= PRE_SALE_30_ETH;
+        return withinPeriod && higherThanMin30ETH;
     }
 
-    // low level token purchase function
+    /* low level token purchase function */
     function buyTokens() whenNotPaused public payable {
-        require(validPurchase());
+        address sender = msg.sender;
 
         // make sure the user buying tokens has KYC
-        address sender = msg.sender;
-        Supporter storage sup = supportersMap[sender];
-        require(sup.hasKYC);
+        require(userHasKYC(sender));
+        require(validPurchase());
 
         // calculate token amount to be created
-        uint256 weiAmount = msg.value;
-        uint256 rate = getRate(weiAmount);
-        uint256 tokens = weiAmount.mul(rate);
+        uint256 weiAmountSent = msg.value;
+        uint256 rate = getRate(weiAmountSent);
+        uint256 newTokens = weiAmountSent.mul(rate);
 
         // look if we have not yet reached the cap
-        uint256 totalTokensSold = tokensSold.add(tokens);
+        uint256 totalTokensSold = tokensSold.add(newTokens);
         require(totalTokensSold <= PRE_SALE_GMRP_TOKEN_CAP);
 
         // update supporter state
-        uint256 totalWei = sup.weiSpent.add(weiAmount);
+        Supporter storage sup = supportersMap[sender];
+        uint256 totalWei = sup.weiSpent.add(weiAmountSent);
         sup.weiSpent = totalWei;
 
         // update contract state
-        weiRaised = weiRaised.add(weiAmount);
+        weiRaised = weiRaised.add(weiAmountSent);
         tokensSold = totalTokensSold;
 
         // finally mint the coins
-        mint(sender, tokens);
-        TokenPurchase(sender, weiAmount, tokens);
+        mint(sender, newTokens);
+        TokenPurchase(sender, weiAmountSent, newTokens);
 
         // and forward the funds to the wallet
         forwardFunds();
     }
 
-    // returns the rate the user will be paying at,
-    // based on the amount of wei sent to the contract
+    /**
+     * returns the rate the user will be paying at,
+     * based on the amount of wei sent to the contract
+     */
     function getRate(uint256 weiAmount) public pure returns (uint256) {
-        if (weiAmount >= PRE_SALE_3000_ETH)
-        {
+        if (weiAmount >= PRE_SALE_3000_ETH) {
             return TOKEN_RATE_40_PERCENT_BONUS;
+        } else if(weiAmount >= PRE_SALE_300_ETH) {
+            return TOKEN_RATE_30_PERCENT_BONUS;
+        } else if(weiAmount >= PRE_SALE_30_ETH) {
+            return TOKEN_RATE_25_PERCENT_BONUS;
+        } else {
+            return 0;
         }
-        return weiAmount >= PRE_SALE_300_ETH ? TOKEN_RATE_30_PERCENT_BONUS : TOKEN_RATE_25_PERCENT_BONUS;
     }
 
-    // send ether to the fund collection wallet
-    // override to create custom fund forwarding mechanisms
+    /**
+     * send ether to the fund collection wallet
+     * override to create custom fund forwarding mechanisms
+     */
     function forwardFunds() internal {
         fundWallet.transfer(msg.value);
     }
@@ -171,32 +188,48 @@ contract GimmerPreSaleTimed is ERC20Basic, Pausable {
         return now > END_TIME;
     }
 
+    /**
+    * @dev Approves an User's KYC
+    * @param _user The user to flag as known
+    */
+    function approveUserKYC(address _user) onlyKycManager public {
+        Supporter storage sup = supportersMap[_user];
+        sup.hasKYC = true;
+        KYC(_user, true);
+    }
 
     /**
-    * @dev Approves an User's KYC, unfreezing any Wei/Tokens
-    * to be withdrawn
-    * @param user The user to flag as known
-    */
-    function approveUserKYC(address user) onlyKycManager public {
-        Supporter storage sup = supportersMap[user];
-        sup.hasKYC = true;
+     * @dev Disapproves an User's KYC
+     * @param _user The user to flag as unknown / suspecious
+     */
+    function disapproveUserKYC(address _user) onlyKycManager public {
+        Supporter storage sup = supportersMap[_user];
+        sup.hasKYC = false;
+        KYC(_user, false);
     }
 
     /**
     * @dev Changes the KYC manager to a new address
-    * @param newKYCManager The new address that will be managing KYC approval
+    * @param _newKYCManager The new address that will be managing KYC approval
     */
-    function setKYCManager(address newKYCManager) onlyOwner public {
-        require(newKYCManager != address(0));
-        kycManager = newKYCManager;
+    function setKYCManager(address _newKYCManager) onlyOwner public {
+        require(_newKYCManager != address(0));
+        kycManager = _newKYCManager;
     }
 
     /**
     * @dev Returns if an users has KYC approval or not
     * @return A boolean representing the user's KYC status
     */
-    function userHasKYC(address user) public constant returns (bool) {
-        return supportersMap[user].hasKYC;
+    function userHasKYC(address _user) public constant returns (bool) {
+        return supportersMap[_user].hasKYC;
+    }
+
+    /**
+     * @dev Returns the weiSpent of a user
+     */
+    function userWeiSpent(address _user) public constant returns (uint256) {
+        return supportersMap[_user].weiSpent;
     }
 
     /**
