@@ -75,24 +75,6 @@ function getTokenRate(tokenAmount){
     return rate;
 }
 
-async function doBuyRemainingTokens(crowdSale, acc, totalBought){
-    const rest = PRE_SALE_TOKEN_CAP.sub(totalBought);
-    
-    // calculate how much wei to send based on the total left on contract
-    const rate = getTokenRate(rest);
-
-    log('Whats your deal: Rate{' + rate.toString(10) + '} Tokens{' + rest.toString(10) + '}');
-
-    const total = new BigNumber(rest).mul(rate);
-    const tokens = await doBuy(crowdSale, acc, total, rate);
-    
-    totalBought = totalBought.add(tokens);
-    
-    const tokensSold = await crowdSale.tokensSold();
-    assert(tokensSold, PRE_SALE_TOKEN_CAP, "Should've bought all the tokens in the PreSale contract");
-    return totalBought;
-}
-
 contract ('GimmerPreSale', async function (caccounts) {
     const contractOwnerAcc = caccounts[0];
     const kycManagerAcc = caccounts[1];
@@ -102,22 +84,24 @@ contract ('GimmerPreSale', async function (caccounts) {
     const testAcc = caccounts[4];
     const buyer2 = caccounts[4];
     
-    const value = new BigNumber(500).mul(EthToWei);
-    const expectedTokenAmount = TOKEN_RATE_BAND_2.mul(value);
+    const value = PRE_SALE_WEI_MIN_TRANSACTION;
+    const expectedTokenAmount = TOKEN_RATE_BAND_3.mul(value);
     
-    describe('KYC Tests', function(){
+    describe('Contract tests', function(){
         it('Should deploy the contract and wait till the campaign starts', async function () {
             // this.startTime = latestTime() + duration.minutes(30);
             // this.endTime = 1514894400;// this.startTime + duration.weeks(1);
             // this.afterEndTime = this.endTime + duration.weeks(1);
-            this.startTime = latestTime() + duration.weeks(1);
-            this.endTime = this.startTime + duration.weeks(1);
+            //this.startTime = latestTime() + duration.weeks(1);
+            //this.endTime = this.startTime + duration.weeks(1);
+            this.startTime = 1511524800;
+            this.endTime = 1514894400;
             this.afterEndTime = this.endTime + duration.seconds(1);
         
             this.crowdsale = await GimmerPreSale.new(fundWalletAcc, kycManagerAcc);
             this.totalBought = new BigNumber(0);
 
-            await increaseTimeTo(this.startTime);
+            //await increaseTimeTo(this.startTime);
             await advanceBlock();
         });
 
@@ -142,11 +126,30 @@ contract ('GimmerPreSale', async function (caccounts) {
             await crowdSale.approveUserKYC(investor, {from:kycManagerAcc}).should.be.rejectedWith(EVMThrow);
         });
 
-        it('Should approve KYC of the investor account when executing from test account', async function () {
+        it('Should approve KYC of the investor account when executing from test account and read event log', async function () {
             const crowdSale = this.crowdsale;
-            await crowdSale.approveUserKYC(investor, {from:testAcc});
+            const {logs} = await crowdSale.approveUserKYC(investor, {from:testAcc});
             const userHasKyc = await crowdSale.userHasKYC(investor);
             assert.equal(userHasKyc, true, "KYC has not been flagged");
+
+            const event = logs.find(e => e.event === 'KYC');
+            
+            should.exist(event);
+            event.args.user.should.equal(investor);
+            event.args.isApproved.should.equal(true);
+        });
+
+        it('Should read the log of approving KYC of the purchaser account', async function () {
+            const crowdSale = this.crowdsale;
+            const {logs} = await crowdSale.approveUserKYC(purchaser, {from:testAcc});
+            const userHasKyc = await crowdSale.userHasKYC(purchaser);
+            assert.equal(userHasKyc, true, "KYC has not been flagged");
+
+            const event = logs.find(e => e.event === 'KYC');
+            
+            should.exist(event);
+            event.args.user.should.equal(purchaser);
+            event.args.isApproved.should.equal(true);
         });
 
         it('Should reject buying more than PreSale cap: ' + PRE_SALE_TOKEN_CAP.div(TOKEN_RATE_BAND_1).add(TOKEN_RATE_BAND_1).div(EthToWei) + ' ETH', async function () {
@@ -161,21 +164,73 @@ contract ('GimmerPreSale', async function (caccounts) {
             await crowdSale.sendTransaction({value:amount, from: investor}).should.be.rejectedWith(EVMThrow);
         });
 
+        it('Should increase totalSupply', async function () {
+            const preTotalSupply = await this.crowdsale.totalSupply();
+            await this.crowdsale.sendTransaction({value, from: investor}).should.be.fulfilled;
+            const postTotalSupply = await this.crowdsale.totalSupply();
+            postTotalSupply.sub(preTotalSupply).should.be.bignumber.equal(expectedTokenAmount);
+        });
+
+        it('Should log purchase', async function () {
+            const {logs} = await this.crowdsale.sendTransaction({value, from: investor});
+    
+            const event = logs.find(e => e.event === 'TokenPurchase');
+    
+            should.exist(event);
+            event.args.purchaser.should.equal(investor);
+            event.args.value.should.be.bignumber.equal(value);
+            event.args.amount.should.be.bignumber.equal(expectedTokenAmount);
+        });
+
+        it('Should assign tokens to sender', async function () {
+            let preBalance = await this.crowdsale.balanceOf(investor);
+            await this.crowdsale.sendTransaction({value: value, from: investor});
+            let postBalance = await this.crowdsale.balanceOf(investor);
+            postBalance.sub(preBalance).should.be.bignumber.equal(expectedTokenAmount);
+        })
+    
+        it('Should forward funds to wallet', async function () {
+            const pre = web3.eth.getBalance(fundWalletAcc);
+            await this.crowdsale.sendTransaction({value, from: investor});
+            const post = web3.eth.getBalance(fundWalletAcc);
+            post.minus(pre).should.be.bignumber.equal(value);
+        });
+
         it('Should buy exactly the minimum (' + PRE_SALE_WEI_MIN_TRANSACTION + ') (Band 3)', async function () {
             const crowdSale = this.crowdsale;
             const tokens = await doBuy(crowdSale, investor, PRE_SALE_WEI_MIN_TRANSACTION, TOKEN_RATE_BAND_3);
             this.totalBought = this.totalBought.add(tokens);
         });
 
+        it('Should pause the contract', async function () {
+            const crowdSale = this.crowdsale;
+            await crowdSale.pause();
+            const isPaused = await crowdSale.paused();
+            assert.equal(isPaused, true, "Contract should be paused");
+        });
+
+        it('Should reject buying the minimum amount when paused', async function () {
+            const crowdSale = this.crowdsale;
+            const amount = PRE_SALE_WEI_MIN_TRANSACTION;
+            await crowdSale.sendTransaction({value: amount.toString(10), from: investor}).should.be.rejectedWith(EVMThrow);
+        });
+
+        it('Should reject buying 300 ETH when paused', async function () {
+            const crowdSale = this.crowdsale;
+            const amount = new BigNumber(300).mul(EthToWei);
+            await crowdSale.sendTransaction({value: amount.toString(10), from: investor}).should.be.rejectedWith(EVMThrow);
+        });
+
+        it('Should unpause the contract', async function () {
+            const crowdSale = this.crowdsale;
+            await crowdSale.unpause();
+            const isPaused = await crowdSale.paused();
+            assert.equal(isPaused, false, "Contract should be unpaused");
+        });
+
         it('Should buy 300 ETH worth of tokens at PreSale (Band 2)', async function () {
             const crowdSale = this.crowdsale;
             const tokens = await doBuy(crowdSale, investor, new BigNumber(300).mul(EthToWei), TOKEN_RATE_BAND_2);
-            this.totalBought = this.totalBought.add(tokens);
-        });
-
-        it('Should buy 500 ETH worth of tokens at PreSale (Band 2)', async function () {
-            const crowdSale = this.crowdsale;
-            const tokens = await doBuy(crowdSale, investor, new BigNumber(500).mul(EthToWei), TOKEN_RATE_BAND_2);
             this.totalBought = this.totalBought.add(tokens);
         });
 
@@ -189,12 +244,6 @@ contract ('GimmerPreSale', async function (caccounts) {
             const crowdSale = this.crowdsale;
             const tokens = await doBuy(crowdSale, investor, new BigNumber(3000).mul(EthToWei), TOKEN_RATE_BAND_1);
             this.totalBought = this.totalBought.add(tokens);
-        });
-
-        it('Should reject buying tokens after sale has reached its cap', async function () {
-            const amount = 1;
-            const crowdSale = this.crowdsale;
-            await crowdSale.sendTransaction({value: amount, from: investor}).should.be.rejectedWith(EVMThrow);
         });
 
         it('Should reject buying tokens after end', async function () {

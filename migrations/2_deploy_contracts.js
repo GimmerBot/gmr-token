@@ -26,6 +26,11 @@ module.exports = function(deployer) {
     //     11263626 // pre sale bonus price
     // ); 
 
+    deployer.deploy(GimmerPreSale, // give the address of the crowd saleddd
+        "0x549c92ae3410f01e30f97b25070da2dcb6302a6a",// WEI holder
+        "0x549c92ae3410f01e30f97b25070da2dcb6302a6a" // KYC manager wallet
+    );//kovan network
+
     // deployer.deploy(GimmerPreSale, // give the address of the crowd saleddd
     //     "0x204d8e205bedc8e12bfc158cba6583966117e3c5",// WEI holder
     //     "0x6c9e345b09ac4842a4fab60fa68c386e2b11540b" // KYC manager wallet

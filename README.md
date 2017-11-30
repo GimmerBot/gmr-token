@@ -30,8 +30,16 @@ truffle compile
 ## Running Unit Tests
 
 ```
-truffle develop
-> test
+ganache.bat
+truffle test test\GimmerPreSale.js --network ganache
+
+After executing the GimmerPreSale.js test, it won't execute again under Ganache as the block time is ahead of the contract time (so always start a new instance of Ganache before testing the GimmerPreSale.js)
+
+
+truffle test test\GimmerPreSaleTimed.js --network ganache
+
+The GimmerPreSaleTimed.js uses the GimmerPreSaleTimed.sol, which is exactly the same contract as the GimmerPreSale.sol but with an additional function that allows us to change the start and end date of the contract, so we can test inside Ganache with unlimited possibilities.
+
 ```
 
 ## Built With
