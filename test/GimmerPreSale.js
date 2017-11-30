@@ -121,25 +121,19 @@ contract ('GimmerPreSale', async function (caccounts) {
             assert.equal(endKycManager, testAcc, "KYC Manager should end as the fifth (test) account");
         });
 
-        it('Should not approve KYC when executing from kyc manager account', async function () {
+        it('Should not approve KYC when executing from KYC Manager account', async function () {
             const crowdSale = this.crowdsale;
             await crowdSale.approveUserKYC(investor, {from:kycManagerAcc}).should.be.rejectedWith(EVMThrow);
         });
 
-        it('Should approve KYC of the investor account when executing from test account and read event log', async function () {
+        it('Should approve KYC of the investor account when executing from test account', async function () {
             const crowdSale = this.crowdsale;
-            const {logs} = await crowdSale.approveUserKYC(investor, {from:testAcc});
+            await crowdSale.approveUserKYC(investor, {from:testAcc});
             const userHasKyc = await crowdSale.userHasKYC(investor);
             assert.equal(userHasKyc, true, "KYC has not been flagged");
-
-            const event = logs.find(e => e.event === 'KYC');
-            
-            should.exist(event);
-            event.args.user.should.equal(investor);
-            event.args.isApproved.should.equal(true);
         });
 
-        it('Should read the log of approving KYC of the purchaser account', async function () {
+        it('Should approve KYC of the test account and read the KYC logs', async function () {
             const crowdSale = this.crowdsale;
             const {logs} = await crowdSale.approveUserKYC(purchaser, {from:testAcc});
             const userHasKyc = await crowdSale.userHasKYC(purchaser);
@@ -152,13 +146,26 @@ contract ('GimmerPreSale', async function (caccounts) {
             event.args.isApproved.should.equal(true);
         });
 
-        it('Should reject buying more than PreSale cap: ' + PRE_SALE_TOKEN_CAP.div(TOKEN_RATE_BAND_1).add(TOKEN_RATE_BAND_1).div(EthToWei) + ' ETH', async function () {
+        it('Should disapprove KYC of the test account and read the KYC logs', async function () {
+            const crowdSale = this.crowdsale;
+            const {logs} = await crowdSale.disapproveUserKYC(purchaser, {from:testAcc});
+            const userHasKyc = await crowdSale.userHasKYC(purchaser);
+            assert.equal(userHasKyc, false, "KYC has not been disaproved");
+
+            const event = logs.find(e => e.event === 'KYC');
+            
+            should.exist(event);
+            event.args.user.should.equal(purchaser);
+            event.args.isApproved.should.equal(false);
+        });
+
+        it('Should reject buying 1 token more than PreSale cap: ('  + PRE_SALE_TOKEN_CAP.add(1).div(EthToWei).toString(10) + ' GMR or ' + PRE_SALE_TOKEN_CAP.div(TOKEN_RATE_BAND_1).add(TOKEN_RATE_BAND_1).div(EthToWei) + ' ETH)', async function () {
             const amount = PRE_SALE_TOKEN_CAP.div(TOKEN_RATE_BAND_1).add(TOKEN_RATE_BAND_1).truncated();
             const crowdSale = this.crowdsale;
             await crowdSale.sendTransaction({value:amount, from: investor}).should.be.rejectedWith(EVMThrow);
         });
 
-        it('Should reject buying less than minimum Wei (' + PRE_SALE_WEI_MIN_TRANSACTION.sub(1) + ')', async function () {
+        it('Should reject buying less than minimum Wei (' + PRE_SALE_WEI_MIN_TRANSACTION.sub(1).div(EthToWei).toString(10) + '/' + PRE_SALE_WEI_MIN_TRANSACTION.div(EthToWei).toString(10) + ' ETH)', async function () {
             const amount = PRE_SALE_WEI_MIN_TRANSACTION.sub(1);
             const crowdSale = this.crowdsale;
             await crowdSale.sendTransaction({value:amount, from: investor}).should.be.rejectedWith(EVMThrow);

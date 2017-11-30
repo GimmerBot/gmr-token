@@ -1,7 +1,8 @@
-var GimmerToken = artifacts.require("./GimmerToken.sol");
-var GimmerCrowdSale = artifacts.require("./GimmerCrowdSale.sol");
-var GimmerPreSale = artifacts.require("./GimmerPreSale.sol");
+//var GimmerToken = artifacts.require("./GimmerToken.sol");
+//var GimmerCrowdSale = artifacts.require("./GimmerCrowdSale.sol");
+//var GimmerPreSale = artifacts.require("./GimmerPreSale.sol");
 //var GimmerCrowdSaleB = artifacts.require("./GimmerCrowdSaleB.sol");
+var GimmerPreSale = artifacts.require("./GimmerPreSale.sol");
 
 function getNow() {
     return new Number(((new Date).getTime()) / 1000.0);
