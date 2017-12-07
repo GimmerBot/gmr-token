@@ -182,6 +182,20 @@ Only the Owner of the contract can execute this.
 Changes the owner of the contract to a new one.\\
 Only the Owner of the contract can execute this.
 
+\subsection{Events}
+
+\subsubsection{TokenPurchase}
+Occurs everytime a user sends Wei to the contract.\\
+Sends the address of the person buying, the amount of Wei sent and the total amount of tokens bought.
+
+\subsubsection{Mint}
+Occurs everytime tokens are minted on the contract.\\
+Sends the address of the person that's receiving the tokens and the total amount of tokens.
+
+\subsubsection{KYC}
+Occurs everytime the KYC Manager changes the KYC enabled state of an user.\\
+Sends the address of the wallet that the manager changed and the state that it was changed to (approved/disapproved).
+
 \section{Gimmer Token}
 Gimmer Token is the contract for the GMR Tokens in the Gimmer ecosystem.\\
 It's a Mintable Token, meaning the Crowdsale actually creates the tokens before each transaction.\\
@@ -223,7 +237,7 @@ Together with KYC, GMRP token balance will be prefilled into GMR to all users th
 \subsubsection{Sale Wei Limit Without KYC}
 The limit of Wei an user can spend in this contract before being blocked and requiring KYC approval.\\
 This can be updated by the owner of the contract by using updateSaleLimitWithoutKYC, see Functions\\
-Value: \textbf{?? USD/ETH}\\
+Value: \textbf{30 ETH}\\
 
 \subsubsection{Freeze Wallet}
 The wallet where the frozen funds will go incase we sell less than the lower bound limit.
@@ -231,20 +245,19 @@ The wallet where the frozen funds will go incase we sell less than the lower bou
 \subsection {Open Questions}
 
 \subsubsection{How many ETH can one invest without KYC?}
-Value: \textbf{30 ETH}\\
-The owner should be able to change the KYC minimum amount.
+The owner should be able to change the KYC minimum amount.\\
+Value: \textbf{up to 30 ETH}
 
 \subsubsection{All investors will have KYC or we would want to allow without KYC?}
 We'll accept all investors, but lock anyone that wants to buy more than a specified amount.\\
-Additional: What if someone uses several different wallets to buy tokens? If we don't KYC everyone there's still the possibility of someone going the extra mile and distributing ETH to several different accounts and buying more than it should be allowed.
 
 \subsubsection{What is the logic of 10\% extra token created?}
 Comission to the Gimmer Team over the total amount of tokens sold.
 
-\subsubsection{How should 50 million token will be handled?/What is freeze wallet?}
+\subsubsection{How should 50 million token be handled?/What is freeze wallet?}
 If we sell less tokens than the lower bound limit (50 million tokens) we mint the remaining unsold tokens (50 million - sold) and transfer them to a cold storage frozen wallet.\\
 
 \subsubsection{Tokens which are not sold during the Pre Sale, Do we want to sell those tokens during the Crowd Sale?}
-Yes.
+Yes, the maximum token sale cap is 100.000.000, so we remove the total amount sold in the presale (up to 15 mil) and sell the rest.
 
 \end{document}
