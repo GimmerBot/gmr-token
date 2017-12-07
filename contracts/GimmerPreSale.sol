@@ -1,7 +1,5 @@
 pragma solidity ^0.4.17;
 
-
-
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -134,7 +132,7 @@ contract ERC20Basic {
     uint256 public totalSupply;
     mapping(address => uint256) balances;
     function balanceOf(address _owner) public constant returns (uint256) { return balances[_owner]; }
-    // Transfer is disabled for users, as these are PreSale tokens
+    // Transfer is disabled for users, as this contract is just a proof of purchase (valueless)
     //function transfer(address to, uint256 value) public returns (bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
 }

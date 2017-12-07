@@ -54,9 +54,9 @@
 
 %%% The "real" document content comes below...
 
-\title{Gimmer Token Sale Contracts}
+\title{Gimmer Token Sale Smart Contracts Specifications}
 \author{Lucas Assis Ribeiro}
-\date{November 24, 2017} % Activate to display a given date or no date (if empty),
+\date{December 7th, 2017} % Activate to display a given date or no date (if empty),
          % otherwise the current date is printed 
 
 \begin{document}
@@ -64,260 +64,187 @@
 
 \section {Gimmer Pre Sale}
 
-The Gimmer Pre Sale contract is basically a crowdsale and token contract used as a proxy during the presale for the closed sale before opening to the full public.\\
+The Gimmer Pre Sale contract is basically a crowdsale and intransferable-token contract used as a proxy during the presale period before opening to the full public.\\
+Its limited to selling \textbf{15\%} of the tokens.
+
+\subsection{Parameters}
+Total Tokens for Sale: \textbf{15.000.000 GMR}\\
+Band 1 Minimum/Minimum Transaction: \textbf{30 ETH}\\
+Band 2 Minimum: \textbf{300 ETH}\\
+Band 3 Minimum: \textbf{3000 ETH}\\
+Base Conversion Rate: \textbf{1 ETH = 1000 GMR}\\
+Band 1 Rate: \textbf{1 ETH = 1250 GMR}\\
+Band 2 Rate: \textbf{1 ETH = 1300 GMR}\\
+Band 3 Rate: \textbf{1 ETH = 1400 GMR}\\
+Start Time: \textbf{Friday, November 24. 2017, 12:00:00 PM UTC}\\
+End Time: \textbf{Tuesday, January 2. 2018, 12:00:00 PM UTC}\\
 
 \subsection{Constructor}
-\subsubsection{Start Time}
-Start date of the contract in Unix time (see Variables - Start Time)
-
-\subsubsection{End Time}
-End date of the contract in Unix time (see Variables - End Time)
-
-\subsubsection{Price}
-Price for transactions below 3000 ETH (see Variables - Price).
-
-\subsubsection{Bonus Price}
-Price for transactions above 3000 ETH (see Variables - Bonus Price).
-
 \subsubsection{Fund Wallet}
-The wallet that the contract will forward the received Wei to (see Variables - Fund Wallet).
+The wallet that the contract will forward the received Wei to (see Constants - Fund Wallet).
 
 \subsubsection{KYC Manager Wallet}
 The wallet that will start as the KYC Manager wallet (see Variables - KYC Manager Wallet).
 
 \subsection{Variables}
 
+\subsubsection{Tokens Sold}
+The total amount of tokens sold through the Pre Sale contract.
+
+\subsubsection{Wei Raised}
+The total amount of Wei that has passed through the Pre Sale contract.
+
+\subsubsection{KYC Manager Wallet}
+The wallet that is able to approve the KYC of supporters. \\
+Can be changed by the owner of the contract by calling setKYCManager.\\
+Start Value: \textbf{0xbb3628807c424b58b8db1ae5e304255b84581af1}
+
+\subsection{Constants}
+\subsubsection{Fund Wallet}
+The wallet that the Wei funds will be forwarded to.\\
+Value: \textbf{0x8c789463412b2697185e103ded5f75b9b3931a84}
+
+\subsubsection{One Million}
+Reference value to calculate the Pre Sale Token cap\\
+Value: \textbf{1.000.000}
+
+\subsubsection{Pre Sale GMRP Token Cap}
+The total amount of tokens that can be sold in the PreSale contract.\\
+Value: \textbf{15.000.000 tokens}
+
+\subsubsection{Pre Sale 30 ETH}
+The minimum amount of Wei needed to get 25\% bonus tokens.\\
+Value: \textbf{30 ETH}
+
+\subsubsection{Pre Sale 300 ETH}
+The minimum amount of Wei needed to get 30\% bonus tokens.\\
+Value: \textbf{300 ETH}
+
+\subsubsection{Pre Sale 3000 ETH}
+The minimum amount of Wei needed to get 40\% bonus tokens.\\
+Value: \textbf{3000 ETH}
+
+\subsubsection{Token Rate 25\% Bonus}
+The rate to multiply the received Wei by when the amount is in the 25\% bonus range.\\
+Value: \textbf{1250}
+
+\subsubsection{Token Rate 30\% Bonus}
+The rate to multiply the received Wei by when the amount is in the 30\% bonus range.\\
+Value: \textbf{1300}
+
+\subsubsection{Token Rate 40\% Bonus}
+The rate to multiply the received Wei by when the amount is in the 40\% bonus range.\\
+Value: \textbf{1400}
+
 \subsubsection{Start Time}
 The start date of the contract in Unix time. \\
 24th November 2017 12:00 UTC\\
-Timestamp 1511524800 
+Value: \textbf{Timestamp 1511524800}
 
 \subsubsection{End Time}
 The ending date for the contract in Unix time.\\
 2nd January 2018 12:00 UTC\\
-Timestamp 1514894400 
+Value: \textbf{Timestamp 1514894400}
 
-\subsubsection{Price}
-The default price to used in the transactions.\\
-11666666 WEI = 1 GMR
+\subsubsection{Name}
+The name of the token, for logging purposes.\\
+Value: \textbf{GimmerPreSale Token}
 
-\subsubsection{Bonus Price}
-The price to use for transactions that go above the Pre Sale Bonus Min (3000 ETH)\\
-9999999 WEI = 1 GMR
+\subsubsection{Symbol}
+The symbol of the presale token.\\
+Value: \textbf{GMRP}
 
-\subsubsection{Wallet}
-The wallet that the Wei funds will be forwarded to
+\subsubsection{Decimals}
+The total amount of decimals.\\
+Value: \textbf{18}
 
-\subsubsection{KYC Manager Wallet}
-The wallet that is able to approve the KYC of supporters. 
-Can be changed by the owner of the contract by calling setKYCManager.
+\subsection{Public State-Changing Functions}
+\subsubsection{()}
+Fallback function, calls buyTokens().
 
-\subsubsection{Tokens Sold}
-The total amount of tokens sold through the Pre Sale contract.
-
-\subsubsection{WEI Raised}
-
-\subsection{Constants}
-\begin{itemize}
-\item Pre Sale Token Cap: 15,000,000.00000000 GMR
-\item Pre Sale Bonus Wei Min: 3,000 ETH
-\item Pre Sale Wei Min Transaction: 300 ETH (never really used)
-\end{itemize}
-
-\subsection{Parameters}
-\begin{itemize}
-\item Initial Supply: 0
-\item Name: "GimmerPreSale"
-\item Symbol: "GMRP"
-\item Decimals: 8
-\end{itemize}
-
-\subsection{Functions}
-
-\subsubsection{buyTokens(address beneficiary)}
-Public
+\subsubsection{buyTokens()}
+Buys tokens based on the amount of Wei sent to the contract.\\
+KYC approval is needed for the transaction to fullfill.
 
 \subsubsection{approveUserKYC(address user)}
-Public
+Approves the KYC for the specified wallet address.\\
+Only the KYC Manager wallet can execute this.
+
+\subsubsection{disapproveUserKYC(address user)}
+Disapproves the KYC for the specified wallet address.\\
+Only the KYC Manager wallet can execute this.
 
 \subsubsection{setKYCManager(address newKYCManager)}
-Public
+Changes the KYC Manager wallet address to a new one.\\
+Only the Owner of the contract can execute this.
 
-\subsubsection{setKYCManager(address newKYCManager)}
-Public
-
-\subsubsection{userHasKYC(address user)}
-Public Constant
-
-\subsubsection{mint(address to, uint256 amount)}
-Internal
-
-\subsection{Tests}
-
-\subsubsection{Expected Values}
-
-\begin{itemize}
-    \item 30\% Price: 11666666 WEI for 0.00000001 GMR
-    \item 40\% Price:  9999999 WEI for 0.00000001 GMR
-\end{itemize}
-
-Pricing
-\begin{itemize}
-    \item 1 ETH = 780 GMR
-    \item 300 ETH = 234000.01497600 GMR (30\% bonus)
-    \item 3001 ETH = 2520840.19158385 GMR (40\% bonus)
-\end{itemize}
-
-\subsubsection{KYC}
-\begin{itemize}
-    \item Change KYC Manager to Third account
-    \item Approve Primary account from Third account
-    \item Buy 1 ETH
-\end{itemize}
-
+\subsubsection{transferOwnership(address newOwner)}
+Changes the owner of the contract to a new one.\\
+Only the Owner of the contract can execute this.
 
 \section{Gimmer Token}
-
 Gimmer Token is the contract for the GMR Tokens in the Gimmer ecosystem.\\
-It's a Mintable Token, meaning the Crowdsale actually creates the tokens before each sale.\\
-The token also inherits the Pausable lifecycle contract, as it starts paused - so no trading can occur before the crowd sale is over and the token is unpaused.\\
-
+It's a Mintable Token, meaning the Crowdsale actually creates the tokens before each transaction.\\
 
 \subsection{Parameters}
-
-\begin{itemize}
-\item Initial Supply: 0
-\item Name: "GimmerToken"
-\item Symbol: "GMR"
-\item Decimals: 8
-\end{itemize}
-
+Maximum Token Cap: \textbf{110.000.000 GMR}\\
+Name: \textbf{GimmerToken}\\
+Decimals: \textbf{18}\\
+Symbol: \textbf{GMR}
 
 \section{Gimmer Crowd Sale}
-
-Gimmer Crowd Sale is the main contract for the token sale.
-
-\subsection{Initial Implementation}
-Initially the contract inherited straight from OpenZeppelin's Crowdsale, but the end result was more complex than was expected - it works, but with so much redundant data that it should only be used for testing.
-
-The main differences from the OpenZeppelin Crowdsale:
-
-\begin{itemize}
-\item Our GMR Token has 8 decimals, lower than the 18 used in ETH. The Crowdsale contract uses a rate variable and a multiplier, but in our case we need to divide and truncate.
-\item The pricing in the contract is dependent on the current date, so either way the pricing variable would just be stored there and unused.
-\item The contract has a Stage/Phase system, which always keeps tracks of dates and ending times. The crowdsale was also doing that, just adding redundancy/points of failure.
-\item We have direct access to our GimmerToken interfaced correctly with the contract, so we can call unpause() directly from the contract and eliminate 1 step that is currently needed from the main wallet after the sale (unverified)
-\end{itemize}
-
-\subsection{Current Implementation}
-The current implementation uses the Crowdsale contract, but in a different way; it inherits only from Ownable, and the Crowdsale parts are copy pasted and modified on demand from the OpenZeppelin version.
-
-\subsection{Constants}
-
-\begin{itemize}
-\item Pre Sale Token Cap: 15,000,000.00000000 GMR
-\item Pre Sale Bonus Wei Min: 3,000 ETH
-\item Pre Sale Wei Min Transaction: 300 ETH
-\item Token Sale Cap: 100,000,000.00000000 GMR
-\item Min Token Transaction: 1.00000000 GMR
-\item Lower Bound Token Limit: 50,000,000.00000000 GMR
-\end{itemize}
-
-\subsection{Constructor}
-
-\subsubsection{Start Date}
-The date the contract will change from Deployment stage
-
-
-\subsubsection{Sale Token Prices}
-All the prices the token should have based on each date provided by the following parameter.
-Current prices being used (unverified): 
-
-\begin{itemize}
-\item 13158496
-\item 13333332
-\item 14166666
-\item 14999999
-\item 15833332
-\end{itemize}
-
-
-\subsubsection{Sale Token Dates}
-The ending date of each token pricing phase in Unix time.
-Current dates being used:
-
-\begin{itemize}
-\item 2nd January 2018 12:00 UTC or when the 15,000,000 GMR presale cap is reached. Which ever happens first.
-\item 10th January 11:59 UTC
-\item 17th January 11:59 UTC
-\item 24th January 11:59 UTC
-\item 31st January 11:59 UTC
-\end{itemize}
-
-
-\subsubsection{Sale Wei Limit Without KYC}
-The limit of Wei an user can spend in this contract before being blocked and needing KYC approval.\\
-5 ETH\\
-This can be updated by the owner of the contract by using updateSaleLimitWithoutKYC, see Functions
-
-
-\subsubsection{Freeze Wallet}
-The wallet where the frozen funds will go incase we sell lower than the lower bound limit.
-
-
-\subsubsection{Pre Sale Bonus Price}
-The pricing to be used for the tokens if the user spends more than the min for bonus in PreSale
-Value being used (for referency only, its wrong): \\
-11263626
-
-\subsection{Stages}
-The contract has 4 distinct stages, not to be confused with the pricing phases (which are basically substages for the PreSale and Sale stages).
-
-\subsubsection{Deployment}
-This is the state the contract starts in. The stage means the contract is waiting for the start date of the crowdsale to move to PreSale.
-While in Deployment, all buying operations are blocked.\\
-When we get to the starting date, all operations are 'automatically' unlocked. Either the owner of the contract can call forceUpdateState() or the first user to send a transaction to the contract will cause it to update to PreSale stage.
-
-\subsubsection{PreSale}
-The PreSale state is the first stage that allows the sale of tokens, but it's capped. This is considered the first pricing phase (see section 2.7 for Pricing Phases), which will use the pre-discounted price. If the sender buys over the Pre Sale Bonus Wei Min the price drops to the the Bonus Pre Sale Pricing, which has a 40\% bonus instead of the 30\% PreSale default.
-While in PreSale time, the contract cannot mint more than the Pre Sale Token Cap (15 million GMR). \\
-Transactions need to be at least 300 ETH to go through, also, if a user buys more than 3000 ETH the transaction will process with the custom presale bonus price.\\
-After the date for the Phase1 to end arrives, we move automatically to the Sale state.\\
-Users need KYC to do any kind of operation on PreSale.
- 
-\subsubsection{Sale}
-At the after sale it's where the other 4 token phases happen. No custom pricing rules, just KYC limit and pricing by date.\\
-We begin at Phase2 of the token pricing.\\
-When we reach the end of the last token pricing phase the contract execute the finishContract() function, which:\\
-- Takes 10\% of the total amount of tokens sold and forwards them to the creator of the contract\\
-- If we have sold less than the lower bound limit (50 million tokens), after taking the 10\% mints the rest of the lower bound limit (so 50 millions - total sold - 10\%) and sends them to a frozen wallet. 
-
-\subsubsection{FinishedSale}
-This is the stage where the contract is done - it has given ownership of the token back to the owner of the contract
-
-\subsection{Pricing Phases}
-The contract has 5 pricing phases, being the first one the presale phase, and the other 4 standard sale.
-
-\subsection{KYC}
-Due to Know Your Customer rules, the contract keeps track of all accounts that acquire tokens. To buy more than the allowed limit, the user must be flagged by the kycManager account.
+Gimmer Crowd Sale is the main contract for the actual token sale.\\
+KYC approval and balance will be initially imported from the PreSale contract, so all users that participated in the PreSale will already have their GMR balance/approval when the contract starts.\\
+The total amount of tokens for sale is 100.000.000 GMR minus the total amount sold on the Pre Sale contract - which should amount to 85.000.000 if we sell everything on the Pre Sale stage.
 
 \subsection{Parameters}
-\begin{itemize}
-\item currentStage
-\item currentTokenPricingPhase
-\item currentStage
-\end{itemize}
+Total tokens for sale: \textbf{85.000.000 GMR}\\
+Minimum transaction: \textbf{0.1 ETH}\\
+Wei Limit Without KYC: \textbf{30 ETH}\\
+Base conversion: \textbf{1 ETH = 1000 GMR}\\
+Week 1 Rate: \textbf{1 ETH = 1200 GMR}\\
+Week 2 Rate: \textbf{1 ETH = 1150 GMR}\\
+Week 3 Rate: \textbf{1 ETH = 1100 GMR}\\
+Week 4 Rate: \textbf{1 ETH = 1050 GMR}\\
+Week 1 Date: \textbf{12:00 3rd January 2018 to 11:59 UTC on 10th January 2018}\\
+Week 2 Date: \textbf{12:00 10th January 2018 to 11:59 UTC on 17th January 2018}\\
+Week 3 Date: \textbf{12:00 17th January 2018 to 11:59 UTC on 24th January 2018}\\
+Week 4 Date: \textbf{12:00 24th January 2018 to 11:59 UTC on 31st January 2018}\\
 
-\subsection{Functions}
-\begin{itemize}
-\item buyTokens
-\item approveUserKYC
-\item updateSaleLimitWithoutKYC
-\item forceUpdateState
-\end{itemize}
+\subsection{Specifications}
+\subsubsection{KYC}
+Know-Your-Customer rules that users cannot spend more than a specified amount before needing to be approved by the KYC Manager wallet.\\
+Only the owner of the contract can change the KYC Manager wallet.\\
+All KYC information will be imported at the start of the crowdsale contract, so users that we're approved before will start approved here.
 
-\subsection{Events}
+\subsubsection{GMRP}
+Together with KYC, GMRP token balance will be prefilled into GMR to all users that participated in the presale.
 
-TokenPurchase:
+\subsubsection{Sale Wei Limit Without KYC}
+The limit of Wei an user can spend in this contract before being blocked and requiring KYC approval.\\
+This can be updated by the owner of the contract by using updateSaleLimitWithoutKYC, see Functions\\
+Value: \textbf{?? USD/ETH}\\
+
+\subsubsection{Freeze Wallet}
+The wallet where the frozen funds will go incase we sell less than the lower bound limit.
+
+\subsection {Open Questions}
+
+\subsubsection{How many ETH can one invest without KYC?}
+Value: \textbf{30 ETH}\\
+The owner should be able to change the KYC minimum amount.
+
+\subsubsection{All investors will have KYC or we would want to allow without KYC?}
+We'll accept all investors, but lock anyone that wants to buy more than a specified amount.\\
+Additional: What if someone uses several different wallets to buy tokens? If we don't KYC everyone there's still the possibility of someone going the extra mile and distributing ETH to several different accounts and buying more than it should be allowed.
+
+\subsubsection{What is the logic of 10\% extra token created?}
+Comission to the Gimmer Team over the total amount of tokens sold.
+
+\subsubsection{How should 50 million token will be handled?/What is freeze wallet?}
+If we sell less tokens than the lower bound limit (50 million tokens) we mint the remaining unsold tokens (50 million - sold) and transfer them to a cold storage frozen wallet.\\
+
+\subsubsection{Tokens which are not sold during the Pre Sale, Do we want to sell those tokens during the Crowd Sale?}
+Yes.
 
 \end{document}
