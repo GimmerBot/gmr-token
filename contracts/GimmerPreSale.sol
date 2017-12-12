@@ -169,9 +169,9 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     uint256 public constant PRE_SALE_3000_ETH   = 3000 ether;// Minimum 3000 Ether to get 40% Bonus Tokens
 
     /* Bonus Tokens based on the ETH Contributed in single transaction */
-    uint256 public constant TOKEN_RATE_25_PERCENT_BONUS = 1250; // 25% Bonus Tokens, when >= 30 ETH & < 300 ETH
-    uint256 public constant TOKEN_RATE_30_PERCENT_BONUS = 1300; // 30% Bonus Tokens, when >= 300 ETH & < 3000 ETH
-    uint256 public constant TOKEN_RATE_40_PERCENT_BONUS = 1400; // 40% Bonus Tokens, when >= 3000 ETH
+    uint256 public constant TOKEN_RATE_25_PERCENT_BONUS = 3125; // 25% Bonus Tokens, when >= 30 ETH & < 300 ETH
+    uint256 public constant TOKEN_RATE_30_PERCENT_BONUS = 3250; // 30% Bonus Tokens, when >= 300 ETH & < 3000 ETH
+    uint256 public constant TOKEN_RATE_40_PERCENT_BONUS = 3500; // 40% Bonus Tokens, when >= 3000 ETH
 
     /* start and end timestamps where investments are allowed (both inclusive) */
     uint256 public constant START_TIME  = 1511524800;   //GMT: Friday, 24 November 2017 12:00:00
