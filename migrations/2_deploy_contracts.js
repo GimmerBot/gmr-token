@@ -1,8 +1,4 @@
-//var GimmerToken = artifacts.require("./GimmerToken.sol");
-//var GimmerCrowdSale = artifacts.require("./GimmerCrowdSale.sol");
-//var GimmerPreSale = artifacts.require("./GimmerPreSale.sol");
-//var GimmerCrowdSaleB = artifacts.require("./GimmerCrowdSaleB.sol");
-var GimmerPreSale = artifacts.require("./GimmerPreSale.sol");
+//var GimmerToken = artifacts.require("./GimmerTokenSale.sol");
 
 function getNow() {
     return new Number(((new Date).getTime()) / 1000.0);
@@ -27,10 +23,12 @@ module.exports = function(deployer) {
     //     11263626 // pre sale bonus price
     // ); 
 
-    deployer.deploy(GimmerPreSale, // give the address of the crowd saleddd
-        "0x549c92ae3410f01e30f97b25070da2dcb6302a6a",// WEI holder
-        "0x549c92ae3410f01e30f97b25070da2dcb6302a6a" // KYC manager wallet
-    );//kovan network
+    //0000000000000000000000008c789463412b2697185e103ded5f75b9b3931a84000000000000000000000000bb3628807c424b58b8db1ae5e304255b84581af1
+
+    // deployer.deploy(GimmerPreSale, // give the address of the crowd saleddd
+    //     "0x8c789463412b2697185e103ded5f75b9b3931a84",// WEI holder
+    //     "0xbb3628807c424b58b8db1ae5e304255b84581af1" // KYC manager wallet
+    // );//kovan network
 
     // deployer.deploy(GimmerPreSale, // give the address of the crowd saleddd
     //     "0x204d8e205bedc8e12bfc158cba6583966117e3c5",// WEI holder

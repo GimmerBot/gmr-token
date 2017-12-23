@@ -1,1 +1,0 @@
-truffle test test\GimmerPreSale.js --network ganache

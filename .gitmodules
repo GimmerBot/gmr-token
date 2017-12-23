@@ -1,6 +1,0 @@
-[submodule "submodules/zeppelin-gimmer"]
-	path = submodules/zeppelin-gimmer
-	url = https://github.com/GimmerBot/zeppelin-solidity
-[submodule "submodules/zeppelin-solidity"]
-	path = submodules/zeppelin-solidity
-	url = https://github.com/OpenZeppelin/zeppelin-solidity

@@ -1,6 +1,7 @@
 // Allows us to use ES6 in our migrations and tests.
-require('babel-register')
-require('babel-polyfill')
+require('babel-register');
+require('babel-polyfill');
+var HDWalletProvider = require("truffle-hdwallet-provider");
 
 module.exports = {
     networks: {
@@ -22,24 +23,15 @@ module.exports = {
             port: 4020,
             network_id: "*", // Match any network id
             from: "627306090abaB3A6e1400e9345bC60c78a8BEf57",
+            gasPrice: 30000000000 // 30 GWei
         },
-        kovan: {
-            port: 8545,
+        coverage: {
+            host: "localhost",
+            port: 8555,         // <-- If you change this, also set the port option in .solcover.js.
             network_id: "*",
-            //from: 
+            gas: 0xfffffffffff,
+            gasPrice: 0x01 // low gas price
         }
-        //,
-        //live: {
-        //  host: "178.25.19.88", // Random IP for example purposes (do not use)
-        //  port: 80,
-        //  network_id: 1,        // Ethereum public network
-        //  // optional config values:
-        //  // gas
-        //  // gasPrice
-        //  // from - default address to use for any transaction Truffle makes during migrations
-        //  // provider - web3 provider instance Truffle should use to talk to the Ethereum network.
-        //  //          - if specified, host and port are ignored.
-        //}
     },
     solc: {
         optimizer: {
