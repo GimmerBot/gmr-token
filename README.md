@@ -30,10 +30,9 @@ https://github.com/GimmerBot/gmr-token/blob/master/documentation/GimmerTokenSale
 ## Bug Bounty
 
 ### Files
-GimmerToken.sol - Contract file for the GMR token. Basically a MintableToken with the addition that it can only be traded after minting is complete.  
-\url{https://github.com/GimmerBot/gmr-token/blob/master/contracts/GimmerToken.sol}  
-GimmerTokenSale.sol - Manages PreSale and Crowd Sale transactions - \url{https://github.com/GimmerBot/gmr-token/blob/master/contracts/GimmerTokenSale.sol}  
-GimmerTokenSale.js - Automated tests for both the Token Sale and GMR Token contracts. - \url{https://github.com/GimmerBot/gmr-token/blob/master/test/GimmerTokenSale.js}  
+GimmerToken.sol - Contract file for the GMR token. Basically a MintableToken with the addition that it can only be traded after minting is complete. - https://github.com/GimmerBot/gmr-token/blob/master/contracts/GimmerToken.sol  
+GimmerTokenSale.sol - Manages PreSale and Crowd Sale transactions - https://github.com/GimmerBot/gmr-token/blob/master/contracts/GimmerTokenSale.sol  
+GimmerTokenSale.js - Automated tests for both the Token Sale and GMR Token contracts. - https://github.com/GimmerBot/gmr-token/blob/master/test/GimmerTokenSale.js  
 
 ### Bugs
 Found bugs will be rewarded proportionately to their severity.
