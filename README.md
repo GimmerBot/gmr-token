@@ -1,11 +1,12 @@
-# Gimmer Token Ethereum Contracts
+# Gimmer® Solidity Contracts
 
 All the Gimmer Solidity contracts will be stored in this repository.
 
 ### Prerequisites
 
 ```
-Truffle 4.01
+Truffle 4
+NPM
 ```
 
 ## Compiling
@@ -14,22 +15,31 @@ Truffle 4.01
 truffle compile
 ```
 
-## Running Unit Tests
+## Running Unit+Coverage tests
 
 ```
-ganache.bat
-truffle test test\GimmerTokenSale.js --network ganache
-
-```
-
-## Running coverage tests
-
-(see testrpc.txt)
-
-```
-testrpc-sc -args
+testrpc-sc -args (see testrpc.txt)
 ./node_modules/.bin/solidity-coverage
 ```
+
+## Documentation
+
+The documentation can be found in the following link:
+https://github.com/GimmerBot/gmr-token/blob/master/documentation/GimmerTokenSaleContracts.pdf
+
+## Bug Bounty
+
+### Files
+GimmerToken.sol - Contract file for the GMR token. Basically a MintableToken with the addition that it can only be traded after minting is complete.  
+\url{https://github.com/GimmerBot/gmr-token/blob/master/contracts/GimmerToken.sol}  
+GimmerTokenSale.sol - Manages PreSale and Crowd Sale transactions - \url{https://github.com/GimmerBot/gmr-token/blob/master/contracts/GimmerTokenSale.sol}  
+GimmerTokenSale.js - Automated tests for both the Token Sale and GMR Token contracts. - \url{https://github.com/GimmerBot/gmr-token/blob/master/test/GimmerTokenSale.js}  
+
+### Bugs
+Found bugs will be rewarded proportionately to their severity.
+
+### Tips
+Recommendations and tips about the structure of the contract can also be accepted, though rewards will vary based on their usefulness to us, with the rules we have to implement.
 
 ## Built With
 
