@@ -131,14 +131,14 @@ contract ('GimmerTokenSale', async function (accounts) {
             await this.tokensale.finishContract({from: WALLET_OWNER}).should.be.rejectedWith(EVMThrow);
         });
 
-        it('GimmerTokenSale should not have ended', async function () {
+        it('Contract should not be on finished state', async function () {
             const tokensale = this.tokensale;
             const hasEnded = await tokensale.hasEnded();
             
             assert.equal(hasEnded, false, "Has Ended should be false");
         });
 
-        it('GimmerTokenSale presale should not have ended', async function () {
+        it('Contract should not have finished presale', async function () {
             const tokensale = this.tokensale;
             const hasPreSaleEnded = await tokensale.hasPreSaleEnded();
             
@@ -150,7 +150,7 @@ contract ('GimmerTokenSale', async function (accounts) {
             owner.should.equal(WALLET_OWNER);
         });
 
-        it('Should await the start of the PreSale period', async function () {
+        it('Should await untill the start of the PreSale period', async function () {
             // add one hour to make sure were inside the next block
             await increaseTimeTo(PRE_SALE_START_TIME.add(ONE_HOUR));
             await advanceBlock();
@@ -215,7 +215,7 @@ contract ('GimmerTokenSale', async function (accounts) {
             assert.equal(endKycManager, WALLET_KYCMANAGER, "KYC Manager should end as the KYC Manager wallet");
         });
 
-        it('Should not approve KYC when executing from test wallet', async function () {
+        it('Should not approve KYC when executing from old KYC Manager (test wallet that was input on constructor)', async function () {
             const tokensale = this.tokensale;
             await tokensale.approveUserKYC(WALLET_INVESTOR, {from:WALLET_TEST}).should.be.rejectedWith(EVMThrow);
         });
@@ -263,13 +263,14 @@ contract ('GimmerTokenSale', async function (accounts) {
             event.args.isApproved.should.equal(false);
         });
         
-        it('Should reject buying 1 token more than PreSale cap: (' + PRE_SALE_TOKEN_CAP.add(1).div(TO_WEI).toString(10) + ' GMR)', async function () {
+        it('Should reject buying 1 token more than PreSale cap: (' + PRE_SALE_TOKEN_CAP.add(1).div(TO_WEI).toString(10) + ' GMR/'
+                + PRE_SALE_TOKEN_CAP.div(TOKEN_RATE_40_PERCENT_BONUS).truncated().add(TOKEN_RATE_40_PERCENT_BONUS).div(TO_WEI).toString(10) + ' ETH)', async function () {
             const tokensale = this.tokensale;
             const amount = PRE_SALE_TOKEN_CAP.div(TOKEN_RATE_40_PERCENT_BONUS).truncated().add(TOKEN_RATE_40_PERCENT_BONUS);
             await tokensale.sendTransaction({value:amount, from: WALLET_INVESTOR}).should.be.rejectedWith(EVMThrow);
         });
 
-        it('Should reject buying less than minimum (' + PRE_SALE_WEI_MIN_TX.sub(1).div(TO_WEI).toString(10) 
+        it('Should reject buying less than minimum during presale (' + PRE_SALE_WEI_MIN_TX.sub(1).div(TO_WEI).toString(10) 
                 + '/' + PRE_SALE_WEI_MIN_TX.div(TO_WEI).toString(10) + ' ETH)', async function () {
             const amount = PRE_SALE_WEI_MIN_TX.sub(1);
             const tokensale = this.tokensale;
@@ -310,7 +311,7 @@ contract ('GimmerTokenSale', async function (accounts) {
             post.minus(pre).should.be.bignumber.equal(value);
         });
 
-        it('Should buy exactly the minimum (' + PRE_SALE_WEI_MIN_TX.div(TO_WEI).toString(10) + ') from kyced wallet', async function () {
+        it('Should buy exactly the minimum (' + PRE_SALE_WEI_MIN_TX.div(TO_WEI).toString(10) + ' ETH) from kyced wallet', async function () {
             const tokensale = this.tokensale;
             const userHasKyc = await tokensale.userHasKYC(WALLET_INVESTOR);
             assert.equal(userHasKyc, true, "Investor should have KYC");
@@ -344,7 +345,7 @@ contract ('GimmerTokenSale', async function (accounts) {
             const tokens = await doBuy(tokensale, WALLET_INVESTOR, new BigNumber(300).mul(TO_WEI), TOKEN_RATE_30_PERCENT_BONUS);
         });
 
-        it('Should buy ' + new BigNumber(3000).toString(10) + ' ETH worth of tokens at PreSale (PreSale 40% Bonus)', async function () {
+        it('Should buy 3000 ETH worth of tokens at PreSale (PreSale 40% Bonus)', async function () {
             const tokensale = this.tokensale;
             const tokens = await doBuy(tokensale, WALLET_INVESTOR, new BigNumber(3000).mul(TO_WEI), TOKEN_RATE_40_PERCENT_BONUS);
         });
@@ -364,14 +365,14 @@ contract ('GimmerTokenSale', async function (accounts) {
             assert.equal(isPreSaleRunning, false, "Contract should not be running CrowsSale");
         });
 
-        it('GimmerTokenSale should not have ended', async function () {
+        it('Contract should not be on finished state', async function () {
             const tokensale = this.tokensale;
             const hasEnded = await tokensale.hasEnded();
             
             assert.equal(hasEnded, false, "Has Ended should be false");
         });
 
-        it('GimmerTokenSale presale should have ended', async function () {
+        it('Contract should have finished presale', async function () {
             const tokensale = this.tokensale;
             const hasPreSaleEnded = await tokensale.hasPreSaleEnded();
             
@@ -430,7 +431,7 @@ contract ('GimmerTokenSale', async function (accounts) {
             assert.equal(isCrowdSaleRunning, true, "Contract should be on CrowdSale state");
         });
 
-        it('Should reject buying 1 token more than Token Sale cap: (' + TOKEN_SALE_SALE_TOKEN_CAP.add(1).div(TO_WEI).toString(10) + ' GMR', async function () {
+        it('Should reject buying 1 token more than Token Sale cap: (' + TOKEN_SALE_SALE_TOKEN_CAP.add(1).div(TO_WEI).toString(10) + ' GMR)', async function () {
             const tokensale = this.tokensale;
             const amount = TOKEN_SALE_SALE_TOKEN_CAP.div(TOKEN_RATE_20_PERCENT_BONUS).truncated().add(TOKEN_RATE_40_PERCENT_BONUS);
             await tokensale.sendTransaction({value:amount, from: WALLET_INVESTOR}).should.be.rejectedWith(EVMThrow);
@@ -456,7 +457,7 @@ contract ('GimmerTokenSale', async function (accounts) {
             await tokensale.sendTransaction({value:SALE_WEI_MIN_TX, from: WALLET_INVESTOR, gasPrice: MAX_TX_GAS_PRICE}).should.be.fulfilled;
         });
 
-        it('Should reject transaction with gas price above the maximum (50.000000001 GWei)', async function () {
+        it('Should reject transaction with gas price above the maximum (' + MAX_TX_GAS_PRICE.add(1).div(GIGA).toString(10) + ' GWei)', async function () {
             const tokensale = this.tokensale;
             await tokensale.sendTransaction({value:SALE_WEI_MIN_TX, from: WALLET_INVESTOR, gasPrice: MAX_TX_GAS_PRICE.add(1)}).should.be.rejectedWith(EVMThrow);
         });
@@ -482,7 +483,7 @@ contract ('GimmerTokenSale', async function (accounts) {
             await tokensale.sendTransaction({value:SALE_WEI_MIN_TX, from: WALLET_INVESTOR, gasPrice: NEW_MAX_TX_GAS_PRICE}).should.be.fulfilled;
         });
 
-        it('Should reject transaction with gas price above the maximum (100.000000001 GWei)', async function () {
+        it('Should reject transaction with gas price above the maximum (' + NEW_MAX_TX_GAS_PRICE.add(1).div(GIGA).toString(10) + ' GWei)', async function () {
             const tokensale = this.tokensale;
             await tokensale.sendTransaction({value:SALE_WEI_MIN_TX, from: WALLET_INVESTOR, gasPrice: NEW_MAX_TX_GAS_PRICE.add(1)}).should.be.rejectedWith(EVMThrow);
         });
@@ -596,7 +597,7 @@ contract ('GimmerTokenSale', async function (accounts) {
             assert.equal(endSaleWeiLimitWithoutKyc.toString(10), NEW_SALE_WEI_LIMIT_WITHOUT_KYC.toString(10), "Sale limit should end with value of 30 ETH");
         });
 
-        it('Should reject buying 30.0000000000000000001 ETH worth of tokens without KYC', async function () {
+        it('Should reject buying ' + NEW_SALE_WEI_LIMIT_WITHOUT_KYC.add(1).div(TO_WEI).toString(10) + ' ETH worth of tokens without KYC', async function () {
             const tokensale = this.tokensale;
             await tokensale.sendTransaction({value:NEW_SALE_WEI_LIMIT_WITHOUT_KYC.add(1), from: WALLET_INVESTOR4}).should.be.rejectedWith(EVMThrow);
         });
@@ -651,7 +652,7 @@ contract ('GimmerTokenSale', async function (accounts) {
             const tokens = await doBuy(tokensale, WALLET_INVESTOR3, ONE_ETH, TOKEN_RATE_05_PERCENT_BONUS);
         });
 
-        it('GimmerTokenSale should not have ended', async function () {
+        it('Contract should not be on finished state', async function () {
             const tokensale = this.tokensale;
             const hasEnded = await tokensale.hasEnded();
             
@@ -679,20 +680,20 @@ contract ('GimmerTokenSale', async function (accounts) {
             assert.equal(isCrowdSaleRunning, false, "Contract should not be on Sale state");
         });
 
-        it('GimmerTokenSale should have ended', async function () {
+        it('Contract should have finished presale', async function () {
+            const tokensale = this.tokensale;
+            const hasPreSaleEnded = await tokensale.hasPreSaleEnded();
+            
+            assert.equal(hasPreSaleEnded, true, "Has Pre Sale Ended should be true");
+        });
+
+        it('Contract should be on finished state', async function () {
             const tokensale = this.tokensale;
             const hasEnded = await tokensale.hasEnded();
             
             assert.equal(hasEnded, true, "Has Ended should be true");
         });
 
-        it('GimmerTokenSale presale should have ended', async function () {
-            const tokensale = this.tokensale;
-            const hasPreSaleEnded = await tokensale.hasPreSaleEnded();
-            
-            assert.equal(hasPreSaleEnded, true, "Has Pre Sale Ended should be true");
-        });
-        
         it('Should reject buying 1 Wei after sale ends', async function () {
             const tokensale = this.tokensale;
 
