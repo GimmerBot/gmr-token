@@ -37,7 +37,7 @@ contract GimmerTokenSale is Ownable {
     /* Allowed Contribution in Ether */
     uint256 public constant PRE_SALE_30_ETH = 30 ether; // Minimum 30 Ether to get 25% Bonus Tokens
     uint256 public constant PRE_SALE_300_ETH = 300 ether; // Minimum 300 Ether to get 30% Bonus Tokens
-    uint256 public constant PRE_SALE_3000_ETH = 3000 ether; // Minimum 3000 Ether to get 40% Bonus Tokens
+    uint256 public constant PRE_SALE_1000_ETH = 1000 ether; // Minimum 3000 Ether to get 40% Bonus Tokens
 
     /* Bonus Tokens based on the ETH Contributed in single transaction */
     uint256 public constant TOKEN_RATE_BASE_RATE = 2500; // Base Price for reference only
@@ -296,7 +296,7 @@ contract GimmerTokenSale is Ownable {
             else if (now >= START_WEEK_1) { return TOKEN_RATE_20_PERCENT_BONUS; }
         }
         else if (isPreSaleRunning()) {
-            if (_weiAmount >= PRE_SALE_3000_ETH) { return TOKEN_RATE_40_PERCENT_BONUS; }
+            if (_weiAmount >= PRE_SALE_1000_ETH) { return TOKEN_RATE_40_PERCENT_BONUS; }
             else if (_weiAmount >= PRE_SALE_300_ETH) { return TOKEN_RATE_30_PERCENT_BONUS; }
             else if (_weiAmount >= PRE_SALE_30_ETH) { return TOKEN_RATE_25_PERCENT_BONUS; }
         }

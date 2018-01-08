@@ -32,8 +32,7 @@ https://github.com/GimmerBot/gmr-token/blob/master/documentation/GimmerTokenSale
 ### Files
 [GimmerTokenSale.sol](https://github.com/GimmerBot/gmr-token/blob/master/contracts/GimmerTokenSale.sol) - Manages PreSale and Crowd Sale transactions. Highest priority to bugscavenge, as the code is mostly new and directly related to our specific token sale rules.  
 [GimmerTokenSale.js](https://github.com/GimmerBot/gmr-token/blob/master/test/GimmerTokenSale.js) - Automated tests for both the Token Sale and GMR Token contracts. Coverage tests using this file can achieve 94% coverage (100% seems impossible at the moment as there are lines in the contract that can never be executed because of date limitations).  
-[GimmerToken.sol](https://github.com/GimmerBot/gmr-token/blob/master/contracts/GimmerToken.sol) - Contract file for the GMR token. Basically a MintableToken with the addition that it can only be traded after minting is complete. Code for the GimmerToken is mostly Zeppelins with the addition of the trading block, so for this file in particular we were already covered by Zeppelins.  
-
+[GimmerToken.sol](https://github.com/GimmerBot/gmr-token/blob/master/contracts/GimmerToken.sol) - Contract file for the GMR token. Basically a MintableToken with the addition that it can only be traded after minting is complete. Code for the GimmerToken is mostly Zeppelins with the addition of the trading block, so for this file in particular we were already covered by Zeppelins.
 
 ### Bugs
 Found bugs will be rewarded proportionately to their impact/severity.
