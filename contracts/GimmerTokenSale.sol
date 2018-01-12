@@ -1,12 +1,13 @@
 pragma solidity ^0.4.18;
 
 import './GimmerToken.sol';
+import './../zeppelin/lifecycle/Pausable.sol';
 
 /**
 * @title Gimmer Token Sale Smart Contract
 * @author lucas@gimmer.net, jitendra@chittoda.com
 */
-contract GimmerTokenSale is Ownable {
+contract GimmerTokenSale is Pausable {
     using SafeMath for uint256;
 
     /**
@@ -116,7 +117,7 @@ contract GimmerTokenSale is Ownable {
     }
 
     /* low level token purchase function */
-    function buyTokens() public payable {
+    function buyTokens() public payable whenNotPaused {
         // Do not allow if gasprice is bigger than the maximum
         // This is for fair-chance for all contributors, so no one can
         // set a too-high transaction price and be able to buy earlier
