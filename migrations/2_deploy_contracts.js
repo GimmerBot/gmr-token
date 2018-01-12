@@ -1,4 +1,5 @@
 //var GimmerToken = artifacts.require("./GimmerTokenSale.sol");
+var GimmerTokenSale = artifacts.require("./GimmerTokenSale.sol");
 
 function getNow() {
     return new Number(((new Date).getTime()) / 1000.0);
@@ -25,9 +26,13 @@ module.exports = function(deployer) {
 
     //0000000000000000000000008c789463412b2697185e103ded5f75b9b3931a84000000000000000000000000bb3628807c424b58b8db1ae5e304255b84581af1
 
-    // deployer.deploy(GimmerPreSale, // give the address of the crowd saleddd
+    // "0x8c789463412b2697185e103ded5f75b9b3931a84", "0xbb3628807c424b58b8db1ae5e304255b84581af1", "15000000000000000000", "50000000000"
+
+    // deployer.deploy(GimmerTokenSale, // give the address of the crowd saleddd
     //     "0x8c789463412b2697185e103ded5f75b9b3931a84",// WEI holder
-    //     "0xbb3628807c424b58b8db1ae5e304255b84581af1" // KYC manager wallet
+    //     "0xbb3628807c424b58b8db1ae5e304255b84581af1", // KYC manager wallet
+    //     '15000000000000000000', /// Sale WEI Limit Without KYC
+    //     '50000000000' // Max TX Gas
     // );//kovan network
 
     // deployer.deploy(GimmerPreSale, // give the address of the crowd saleddd

@@ -1,15 +1,16 @@
 import {advanceBlock} from '../zeppelin/test/helpers/advanceToBlock'
 import increaseTime, { increaseTimeTo, duration } from '../zeppelin/test/helpers/increaseTime'
 import latestTime from '../zeppelin/test/helpers/latestTime'
-//import EVMThrow from '../zeppelin/test/helpers/EVMThrow'
-//const EVMThrow = 'VM Exception while processing transaction: revert'; // Ganache/TestRPC
-const EVMThrow = 'VM Exception while processing transaction: invalid opcode'; // Coverage
 const BigNumber = web3.BigNumber;
-
 const should = require('chai')
     .use(require('chai-as-promised'))
     .use(require('chai-bignumber')(BigNumber))
     .should();
+
+//import EVMThrow from '../zeppelin/test/helpers/EVMThrow' // Truffle Test
+//const EVMThrow = 'VM Exception while processing transaction: revert'; // Ganache/TestRPC
+const EVMThrow = 'VM Exception while processing transaction: invalid opcode'; // Coverage
+
 
 const GimmerToken = artifacts.require("./GimmerToken.sol");
 const GimmerTokenSale = artifacts.require("./GimmerTokenSale.sol");
@@ -23,7 +24,7 @@ const ONE_WEI = new BigNumber(1);
 // constants
 const PRE_SALE_BONUS_3_WEI_MIN = new BigNumber(30).mul(TO_WEI);
 const PRE_SALE_BONUS_2_WEI_MIN = new BigNumber(300).mul(TO_WEI);
-const PRE_SALE_BONUS_1_WEI_MIN = new BigNumber(3000).mul(TO_WEI);
+const PRE_SALE_BONUS_1_WEI_MIN = new BigNumber(1000).mul(TO_WEI);
 
 const TOKEN_RATE_BASE_RATE = new BigNumber(2500);
 const TOKEN_RATE_05_PERCENT_BONUS = new BigNumber(2625);
@@ -102,20 +103,33 @@ contract ('GimmerTokenSale', async function (accounts) {
     const expectedTokenAmount = TOKEN_RATE_25_PERCENT_BONUS.mul(value);
     
     describe('Contract tests', function(){
+        // it('Should deploy the Token Sale contract', async function () {
+        //     // deploy the wallet with test account as the KYC Manager, 
+        //     // as we're going to change it to the correct account later
+        //     this.tokensale = await GimmerTokenSale.new(WALLET_FUND, WALLET_TEST,
+        //         SALE_WEI_LIMIT_WITHOUT_KYC, MAX_TX_GAS_PRICE);
+        //     await increaseTimeTo(PRE_SALE_START_TIME.add(ONE_HOUR));
+        //     await advanceBlock();
+
+        //     await this.tokensale.approveUserKYC(WALLET_INVESTOR, {from:WALLET_TEST}).should.be.fulfilled;
+        
+        //     await this.tokensale.sendTransaction({value:value, from: WALLET_INVESTOR}).should.be.fulfilled;
+        // });
+
         it('Should reject deploying the Token Sale contract with an empty fund wallet', async function () {
-            this.tokensale = await GimmerTokenSale.new(new BigNumber(0), WALLET_TEST,
+            await GimmerTokenSale.new(new BigNumber(0), WALLET_TEST,
                 SALE_WEI_LIMIT_WITHOUT_KYC, MAX_TX_GAS_PRICE).should.be.rejectedWith(EVMThrow);
         });
         it('Should reject deploying the Token Sale contract with an empty KYC wallet', async function () {
-            this.tokensale = await GimmerTokenSale.new(WALLET_FUND, new BigNumber(0),
+            await GimmerTokenSale.new(WALLET_FUND, new BigNumber(0),
                 SALE_WEI_LIMIT_WITHOUT_KYC, MAX_TX_GAS_PRICE).should.be.rejectedWith(EVMThrow);
         });
         it('Should reject deploying the Token Sale contract with no Wei Limit', async function () {
-            this.tokensale = await GimmerTokenSale.new(WALLET_FUND, WALLET_TEST,
+            await GimmerTokenSale.new(WALLET_FUND, WALLET_TEST,
                 new BigNumber(0), MAX_TX_GAS_PRICE).should.be.rejectedWith(EVMThrow);
         });
         it('Should reject deploying the Token Sale contract with no Max Tx Gas Price', async function () {
-            this.tokensale = await GimmerTokenSale.new(WALLET_FUND, WALLET_TEST,
+            await GimmerTokenSale.new(WALLET_FUND, WALLET_TEST,
                 SALE_WEI_LIMIT_WITHOUT_KYC, new BigNumber(0)).should.be.rejectedWith(EVMThrow);
         });
 
@@ -284,6 +298,22 @@ contract ('GimmerTokenSale', async function (accounts) {
             postTokensSold.sub(preTokensSold).should.be.bignumber.equal(expectedTokenAmount);
         });
 
+        it('Should pause the contract', async function () {
+            const tokensale = this.tokensale;
+            await tokensale.pause({from: WALLET_OWNER}).should.be.fulfilled;
+        });
+
+        it('Should reject buying when contract is paused', async function () {
+            const tokensale = this.tokensale;
+            await tokensale.sendTransaction({value:value, from: WALLET_INVESTOR}).should.be.rejectedWith(EVMThrow);
+        });
+
+        it('Should unpause the contract', async function () {
+            const tokensale = this.tokensale;
+            await tokensale.unpause({from: WALLET_OWNER}).should.be.fulfilled;
+        });
+
+
         it('Should log purchase', async function () {
             const {logs} = await this.tokensale.sendTransaction({value, from: WALLET_INVESTOR});
     
@@ -362,7 +392,7 @@ contract ('GimmerTokenSale', async function (accounts) {
             const isCrowdSaleRunning = await this.tokensale.isCrowdSaleRunning();
             assert.equal(isTokenSaleRunning, false, "Contract should not be running any sales");
             assert.equal(isPreSaleRunning, false, "Contract should not be running PreSale");
-            assert.equal(isPreSaleRunning, false, "Contract should not be running CrowsSale");
+            assert.equal(isCrowdSaleRunning, false, "Contract should not be running CrowsSale");
         });
 
         it('Contract should not be on finished state', async function () {
@@ -445,6 +475,21 @@ contract ('GimmerTokenSale', async function (accounts) {
         it('Should reject buying less than the minimum during the crowd sale', async function () {
             const tokensale = this.tokensale;
             await tokensale.sendTransaction({value:SALE_WEI_MIN_TX.sub(1), from: WALLET_INVESTOR}).should.be.rejectedWith(EVMThrow);
+        });
+
+        it('Should pause the contract', async function () {
+            const tokensale = this.tokensale;
+            await tokensale.pause({from: WALLET_OWNER}).should.be.fulfilled;
+        });
+
+        it('Should reject buying when contract is paused', async function () {
+            const tokensale = this.tokensale;
+            await tokensale.sendTransaction({value:SALE_WEI_MIN_TX, from: WALLET_INVESTOR}).should.be.rejectedWith(EVMThrow);
+        });
+
+        it('Should unpause the contract', async function () {
+            const tokensale = this.tokensale;
+            await tokensale.unpause({from: WALLET_OWNER}).should.be.fulfilled;
         });
 
         it('Should accept buying exactly the minimum', async function () {
