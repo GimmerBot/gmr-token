@@ -8,8 +8,8 @@ const should = require('chai')
     .should();
 
 //import EVMThrow from '../zeppelin/test/helpers/EVMThrow' // Truffle Test
-//const EVMThrow = 'VM Exception while processing transaction: revert'; // Ganache/TestRPC
-const EVMThrow = 'VM Exception while processing transaction: invalid opcode'; // Coverage
+const EVMThrow = 'VM Exception while processing transaction: revert'; // Ganache/TestRPC/Coverage
+//const EVMThrow = 'VM Exception while processing transaction: invalid opcode'; // Coverage
 
 
 const GimmerToken = artifacts.require("./GimmerToken.sol");
