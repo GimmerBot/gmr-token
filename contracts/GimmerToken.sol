@@ -6,7 +6,7 @@ import './../zeppelin/token/MintableToken.sol';
 * @title Gimmer Token Smart Contract
 * @author lucas@gimmer.net, jitendra@chittoda.com
 */
-contract GimmerToken is MintableToken  {
+contract GimmerToken is MintableToken {
     // Constants
     string public constant name = "GimmerToken";
     string public constant symbol = "GMR";  
