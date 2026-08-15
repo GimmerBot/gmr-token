@@ -2,6 +2,8 @@
 
 All the Gimmer Solidity contracts will be stored in this repository.
 
+> This repository preserves the historical GMR token and token-sale contract sources. For the current Gimmer desktop application, visit [gimmer.com](https://gimmer.com), review [hold-to-use pricing](https://gimmer.com/pricing), or download an official build from [Gimmer releases](https://github.com/GimmerBot/Gimmer/releases).
+
 ### Prerequisites
 
 ```
